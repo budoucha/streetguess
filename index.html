@@ -39,6 +39,21 @@
   #hud .brand { font-weight: 800; letter-spacing: -0.02em; font-size: 20px; color: var(--paper); text-shadow: 0 1px 8px rgba(0,0,0,0.6); }
   #hud .brand b { color: var(--accent); }
   #hud .sub { font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: rgba(243,237,225,0.7); margin-top: 2px; text-shadow: 0 1px 6px rgba(0,0,0,0.6); }
+  #hud .hud-link { margin-top: 6px; }
+  #hud .hud-link a {
+    font-size: 11px;
+    color: rgba(243,237,225,0.6);
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    text-shadow: 0 1px 6px rgba(0,0,0,0.6);
+    pointer-events: auto;
+    transition: color .15s;
+  }
+  #hud .hud-link a:hover {
+    color: var(--paper);
+  }
   /* 結果表示: ボタンの上に配置 */
   #resultInfo {
     display: none;
@@ -406,6 +421,9 @@
   <div id="hud">
     <div class="brand">Street<b>Guess</b></div>
     <div class="sub" id="hudSub">どこにいるか当てよう</div>
+    <div class="hud-link">
+      <a href="https://github.com/budoucha/streetguess" target="_blank" rel="noopener">🐙 GitHub</a>
+    </div>
   </div>
 
   <button id="settingsBtn" title="API キー設定">⚙️</button>
@@ -485,6 +503,10 @@
           💳 <strong>請求先アカウント（クレジットカード）の登録が必須</strong>ですが、月 $200 分の無料枠があるため個人利用では通常無料の範囲内に収まります。<br><br>
           🔒 <strong>キーの保護：</strong>Cloud Console でキーをクリック →「アプリケーションの制限」→「ウェブサイト」に <code>file://*</code> や使用するドメインを追加すると他者に悪用されにくくなります。<br><br>
           💾 <strong>入力したキーはこのブラウザの localStorage に保存</strong>されます。ファイルを再度開いても入力不要です。
+        </div>
+        <div style="margin-top: 16px; border-top: 1px solid var(--line); padding-top: 12px; text-align: center; font-size: 12px;">
+          ソースコードや不具合報告はこちら：<br>
+          🐙 <a href="https://github.com/budoucha/streetguess" target="_blank" rel="noopener" style="font-weight: bold;">GitHub リポジトリ (StreetGuess)</a>
         </div>
       </div>
     </div>
