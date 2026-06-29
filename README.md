@@ -2,6 +2,8 @@
 
 Google Street View を使ったロケーション当てゲームです。GeoGuessr ライクに、ランダムなパノラマを見て世界地図上にピンを立て、正解地点との距離を競います。
 
+🎮 **今すぐ遊ぶ: [https://budoucha.github.io/streetguess/](https://budoucha.github.io/streetguess/)**
+
 ## 特徴
 
 - ビルド不要の単一 HTML ファイル構成
@@ -21,7 +23,11 @@ Google Maps API キー（以下の API を有効化）
 
 ## 使い方
 
-### ブラウザで直接開く
+### 🌐 ブラウザで遊ぶ (インストール不要)
+
+**[https://budoucha.github.io/streetguess/](https://budoucha.github.io/streetguess/)** にアクセスしてすぐに遊ぶことができます。
+
+### ブラウザで直接開く (ローカル環境)
 
 ```sh
 # リポジトリをクローン
