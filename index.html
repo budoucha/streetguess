@@ -122,14 +122,12 @@
     width: 100%; height: 240px;
     border: 3px solid var(--paper); border-radius: 4px;
     box-shadow: 0 8px 30px rgba(0,0,0,0.5);
-    transition: height .2s ease;
     overflow: hidden; background: #aad;
     flex-shrink: 0;
   }
   /* PC: マップ操作中に展開 */
   #sidebar.expanded-pc { width: min(833px, calc(100vw - 240px)); }
   #sidebar.expanded-pc #mapWrap { height: min(588px, calc(100vh - 220px)); }
-  #sidebar, #mapWrap { transition: width .2s ease, height .2s ease; }
   #map { width: 100%; height: 100%; }
 
   /* 「別の問題」「出発地点に戻る」段 */
@@ -366,8 +364,16 @@
     text-shadow: 0 1px 4px rgba(0,0,0,0.9), 0 0 2px rgba(0,0,0,0.7);
   }
 
-  /* expanded: 通常の約2倍 */
-  #mapWrap.expanded { height: 480px !important; }
+  /* PC縮小時: 結果ボタンを縦並びに（窮屈さ解消） */
+  @media (min-width: 561px) {
+    #sidebar:not(.expanded-pc) #resultInfo .ri-actions {
+      flex-direction: column;
+      align-items: stretch;
+    }
+    #sidebar:not(.expanded-pc) #resultInfo .ri-mapbtn {
+      justify-content: center;
+    }
+  }
 
   @media (max-width: 560px) {
     /* ===== スマホ: 上下分割レイアウト ===== */
@@ -891,8 +897,12 @@ function submitGuess() {
   gBtn.disabled = false;
   gBtn.dataset.mode = 'again';
   // ヒント非表示
-  // マップ展開（スマホ）
-  if (typeof setMapExpanded === 'function') setMapExpanded(true);
+  // マップ展開: PC / スマホで適切な展開関数を使い分け
+  if (isMobile()) {
+    setMapExpanded(true);
+  } else {
+    setPCMapExpanded(true);
+  }
 
   setTimeout(() => {
     // 既存のオーバーレイをクリア
@@ -954,12 +964,9 @@ const total = roundHistory.length;
     bounds.extend(cur.truePos);
     bounds.extend(cur.guessPos);
 
-    // 展開トランジション(.2s)完了後にリサイズ＆fitBounds
-    setTimeout(() => {
-      google.maps.event.trigger(map, 'resize');
-      map.fitBounds(bounds, 40);
-      if (km < 5) map.setZoom(10);
-    }, 220);
+    google.maps.event.trigger(map, 'resize');
+    map.fitBounds(bounds, 40);
+    if (km < 5) map.setZoom(10);
   }, 60);
 }
 
@@ -1017,37 +1024,81 @@ function updateCompass() {
 /* ---- スマホ マップ展開 ---- */
 function isMobile() { return window.innerWidth <= 560; }
 
+function refitResultBounds() {
+  if (!isReviewing || !map || roundHistory.length === 0) return;
+  const cur = roundHistory[roundHistory.length - 1];
+  const bounds = new google.maps.LatLngBounds();
+  bounds.extend(cur.truePos);
+  bounds.extend(cur.guessPos);
+  map.fitBounds(bounds, 40);
+  if (cur.km < 5) map.setZoom(10);
+}
+
+// 地図の縦方向に余白を出さない最小ズームを計算してminZoomを更新
+// Mercatorでは world height = 256 * 2^zoom px
+function updateMinZoom() {
+  if (!map) return;
+  const h = document.getElementById('map').clientHeight;
+  if (h <= 0) return;
+  const minZoom = Math.max(0, Math.ceil(Math.log2(h / 256)));
+  map.setOptions({ minZoom });
+  if (map.getZoom() < minZoom) map.setZoom(minZoom);
+}
+
 function setMapExpanded(expanded) {
-  document.getElementById('mapWrap').classList.toggle('expanded', expanded);
+  const mapWrap = document.getElementById('mapWrap');
+  if (mapWrap.classList.contains('expanded') === expanded) return;
+  mapWrap.classList.toggle('expanded', expanded);
   if (map) google.maps.event.trigger(map, 'resize');
-  setTimeout(repositionSVZoom, 220);
+  updateMinZoom();
+  refitResultBounds();
+  repositionSVZoom();
 }
 
 function setPCMapExpanded(expanded) {
-  document.getElementById('sidebar').classList.toggle('expanded-pc', expanded);
-  // トランジション完了後にリサイズ
-  setTimeout(() => {
-    if (map) google.maps.event.trigger(map, 'resize');
-    repositionSVZoom();
-  }, 220);
+  const sidebar = document.getElementById('sidebar');
+  if (sidebar.classList.contains('expanded-pc') === expanded) return;
+  sidebar.classList.toggle('expanded-pc', expanded);
+  if (map) google.maps.event.trigger(map, 'resize');
+  updateMinZoom();
+  refitResultBounds();
+  repositionSVZoom();
 }
 
 function initMapExpandListeners() {
   const mapWrap = document.getElementById('mapWrap');
   const panoEl  = document.getElementById('pano');
 
-  // スマホ: タッチで展開・縮小
-  mapWrap.addEventListener('touchstart', () => {
-    setMapExpanded(true);
+  // 地図のクリックで展開: ただしドラッグ（パン操作）の終端で発火するclickは抑制する
+  // mousedown/touchstart の位置を記憶し、click位置との距離が閾値を超えていれば無視
+  const PAN_THRESHOLD = 5;
+  let mapDownPos = null;
+
+  mapWrap.addEventListener('mousedown', e => {
+    mapDownPos = { x: e.clientX, y: e.clientY };
+  });
+  mapWrap.addEventListener('touchstart', e => {
+    if (e.touches.length === 1) {
+      mapDownPos = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+    } else {
+      mapDownPos = null;
+    }
   }, { passive: true });
+
+  mapWrap.addEventListener('click', e => {
+    if (mapDownPos &&
+        (Math.abs(e.clientX - mapDownPos.x) > PAN_THRESHOLD ||
+         Math.abs(e.clientY - mapDownPos.y) > PAN_THRESHOLD)) {
+      return; // パン操作 → 展開しない
+    }
+    if (isMobile()) setMapExpanded(true);
+    else setPCMapExpanded(true);
+  });
+
+  // SV側で縮小（こちらは座標ズレ問題がないので即時）
   panoEl.addEventListener('touchstart', () => {
     setMapExpanded(false);
   }, { passive: true });
-
-  // PC: マウスダウンで展開、SVクリックで縮小
-  mapWrap.addEventListener('mousedown', () => {
-    if (window.innerWidth > 560) setPCMapExpanded(true);
-  });
   panoEl.addEventListener('mousedown', () => {
     if (window.innerWidth > 560) setPCMapExpanded(false);
   });
@@ -1090,6 +1141,7 @@ window.initGame = function() {
     streetViewControl: false, mapTypeControl: false
   });
   map.addListener('click', onMapClick);
+  updateMinZoom();
 
   document.getElementById('guessBtn').addEventListener('click', () => {
     const btn = document.getElementById('guessBtn');
