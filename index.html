@@ -104,11 +104,9 @@
     overflow: hidden; background: #aad;
     flex-shrink: 0;
   }
-  /* PC: ホバーで微拡大（従来） */
-  #sidebar:hover #mapWrap { height: 320px; }
-  /* PC: マップ操作中に2倍展開 */
-  #sidebar.expanded-pc { width: min(780px, calc(100vw - 240px)); }
-  #sidebar.expanded-pc #mapWrap { height: min(520px, calc(100vh - 220px)); }
+  /* PC: マップ操作中に展開 */
+  #sidebar.expanded-pc { width: min(833px, calc(100vw - 240px)); }
+  #sidebar.expanded-pc #mapWrap { height: min(588px, calc(100vh - 220px)); }
   #sidebar, #mapWrap { transition: width .2s ease, height .2s ease; }
   #map { width: 100%; height: 100%; }
 
@@ -374,7 +372,6 @@
 
     /* mapWrap: 固定高さ */
     #mapWrap { height: 200px; }
-    #sidebar:hover #mapWrap { height: 200px; }
     /* タッチ展開: 2倍 */
     #mapWrap.expanded { height: 400px !important; }
 
