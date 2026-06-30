@@ -689,6 +689,8 @@ let roundHistory = []; // { truePos, guessPos, km } の配列
 let isReviewing = false; // 答え合わせ中フラグ
 let svSource = 'official'; // "official" | "all"
 let plonkGuideRequestId = 0;
+let collapsedMapPointer = null;
+let suppressNextMapClick = false;
 
 /* ---- localStorage キー管理 ---- */
 function getSavedKey() {
@@ -813,13 +815,18 @@ function startRound(data) {
 
 function onMapClick(e) {
   if (isReviewing) return; // 答え合わせ中はピン禁止
+  placeGuessAtLatLng(e.latLng);
+}
+
+function placeGuessAtLatLng(latLng) {
+  if (!latLng || isReviewing) return;
   // 初回ピン打ちで waiting 解除 → 確定するに切り替え
   const gb2 = document.getElementById('guessBtn');
   if (gb2.classList.contains('waiting')) {
     gb2.textContent = '確定する';
     gb2.classList.remove('waiting');
   }
-  guessPos = { lat: e.latLng.lat(), lng: e.latLng.lng() };
+  guessPos = { lat: latLng.lat(), lng: latLng.lng() };
   if (!guessMarker) {
     guessMarker = new google.maps.Marker({ position: guessPos, map, draggable: true, animation: google.maps.Animation.DROP });
     guessMarker.addListener('dragend', ev => { guessPos = { lat: ev.latLng.lat(), lng: ev.latLng.lng() }; });
@@ -1065,34 +1072,164 @@ function setPCMapExpanded(expanded) {
   repositionSVZoom();
 }
 
+function expandMapForViewport() {
+  if (isMobile()) setMapExpanded(true);
+  else setPCMapExpanded(true);
+}
+
+function isMapExpandedForViewport() {
+  if (isMobile()) {
+    return document.getElementById('mapWrap').classList.contains('expanded');
+  }
+  return document.getElementById('sidebar').classList.contains('expanded-pc');
+}
+
+function getMapLatLngAtClient(clientX, clientY) {
+  if (!map) return null;
+  const projection = map.getProjection();
+  if (!projection) return null;
+  const mapEl = document.getElementById('map');
+  const rect = mapEl.getBoundingClientRect();
+  const zoom = map.getZoom();
+  const center = projection.fromLatLngToPoint(map.getCenter());
+  const scale = Math.pow(2, zoom);
+  const point = new google.maps.Point(
+    center.x + (clientX - (rect.left + rect.width / 2)) / scale,
+    center.y + (clientY - (rect.top + rect.height / 2)) / scale
+  );
+  return projection.fromPointToLatLng(point);
+}
+
+function keepLatLngUnderClient(latLng, clientX, clientY) {
+  if (!map || !latLng) return;
+  const projection = map.getProjection();
+  if (!projection) return;
+  const mapEl = document.getElementById('map');
+  const rect = mapEl.getBoundingClientRect();
+  const zoom = map.getZoom();
+  const scale = Math.pow(2, zoom);
+  const point = projection.fromLatLngToPoint(latLng);
+  const centerPoint = new google.maps.Point(
+    point.x - (clientX - (rect.left + rect.width / 2)) / scale,
+    point.y - (clientY - (rect.top + rect.height / 2)) / scale
+  );
+  map.setCenter(projection.fromPointToLatLng(centerPoint));
+}
+
+function startCollapsedMapPointer(clientX, clientY, sourceEvent) {
+  if (isReviewing || isMapExpandedForViewport()) return false;
+  const latLng = getMapLatLngAtClient(clientX, clientY);
+  if (!latLng) return false;
+  collapsedMapPointer = { latLng, startX: clientX, startY: clientY, dragged: false };
+  expandMapForViewport();
+  keepLatLngUnderClient(latLng, clientX, clientY);
+  if (sourceEvent) {
+    sourceEvent.preventDefault();
+    sourceEvent.stopPropagation();
+    sourceEvent.stopImmediatePropagation?.();
+  }
+  return true;
+}
+
 function initMapExpandListeners() {
   const mapWrap = document.getElementById('mapWrap');
   const panoEl  = document.getElementById('pano');
 
-  // 地図のクリックで展開: ただしドラッグ（パン操作）の終端で発火するclickは抑制する
-  // mousedown/touchstart の位置を記憶し、click位置との距離が閾値を超えていれば無視
+  // 地図のクリックで展開: ただしドラッグ（パン操作）の終端で発火するclickは抑制する。
+  // 回答中はドラッグ開始が分かった時点で即座に展開する。
   const PAN_THRESHOLD = 5;
-  let mapDownPos = null;
+  let reviewMapDownPos = null;
+
+  function isMapControlTarget(target) {
+    return target instanceof Element && !!target.closest('#mapControls');
+  }
+
+  function moveCollapsedMapPointer(clientX, clientY, sourceEvent) {
+    if (!collapsedMapPointer) return;
+    if (!collapsedMapPointer.dragged &&
+        (Math.abs(clientX - collapsedMapPointer.startX) > PAN_THRESHOLD ||
+         Math.abs(clientY - collapsedMapPointer.startY) > PAN_THRESHOLD)) {
+      collapsedMapPointer.dragged = true;
+    }
+    if (collapsedMapPointer.dragged) {
+      keepLatLngUnderClient(collapsedMapPointer.latLng, clientX, clientY);
+      sourceEvent?.preventDefault();
+      sourceEvent?.stopPropagation();
+    }
+  }
+
+  function finishCollapsedMapPointer(sourceEvent) {
+    if (!collapsedMapPointer) return;
+    const pointer = collapsedMapPointer;
+    collapsedMapPointer = null;
+    suppressNextMapClick = true;
+    if (!pointer.dragged) {
+      placeGuessAtLatLng(pointer.latLng);
+    }
+    sourceEvent?.preventDefault();
+    sourceEvent?.stopPropagation();
+    setTimeout(() => { suppressNextMapClick = false; }, 600);
+  }
 
   mapWrap.addEventListener('mousedown', e => {
-    mapDownPos = { x: e.clientX, y: e.clientY };
+    if (e.button !== 0 || isMapControlTarget(e.target)) return;
+    if (isReviewing) {
+      reviewMapDownPos = { x: e.clientX, y: e.clientY };
+      return;
+    }
+    startCollapsedMapPointer(e.clientX, e.clientY, e);
+  }, true);
+  window.addEventListener('mousemove', e => {
+    moveCollapsedMapPointer(e.clientX, e.clientY, e);
+  });
+  window.addEventListener('mouseup', e => {
+    finishCollapsedMapPointer(e);
   });
   mapWrap.addEventListener('touchstart', e => {
+    if (isMapControlTarget(e.target)) return;
     if (e.touches.length === 1) {
-      mapDownPos = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+      if (isReviewing) {
+        reviewMapDownPos = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+        return;
+      }
+      startCollapsedMapPointer(e.touches[0].clientX, e.touches[0].clientY, e);
     } else {
-      mapDownPos = null;
+      collapsedMapPointer = null;
+      reviewMapDownPos = null;
     }
+  }, { passive: false, capture: true });
+  mapWrap.addEventListener('touchmove', e => {
+    if (e.touches.length === 1) {
+      moveCollapsedMapPointer(e.touches[0].clientX, e.touches[0].clientY, e);
+    }
+  }, { passive: false });
+  window.addEventListener('touchend', e => {
+    finishCollapsedMapPointer(e);
+  }, { passive: false });
+  window.addEventListener('touchcancel', () => {
+    collapsedMapPointer = null;
+    suppressNextMapClick = false;
   }, { passive: true });
 
   mapWrap.addEventListener('click', e => {
-    if (mapDownPos &&
-        (Math.abs(e.clientX - mapDownPos.x) > PAN_THRESHOLD ||
-         Math.abs(e.clientY - mapDownPos.y) > PAN_THRESHOLD)) {
-      return; // パン操作 → 展開しない
+    if (suppressNextMapClick) {
+      suppressNextMapClick = false;
+      e.preventDefault();
+      e.stopPropagation();
+      e.stopImmediatePropagation?.();
     }
-    if (isMobile()) setMapExpanded(true);
-    else setPCMapExpanded(true);
+  }, true);
+  mapWrap.addEventListener('click', e => {
+    if (!isMapControlTarget(e.target) && isReviewing) {
+      if (reviewMapDownPos &&
+          (Math.abs(e.clientX - reviewMapDownPos.x) > PAN_THRESHOLD ||
+           Math.abs(e.clientY - reviewMapDownPos.y) > PAN_THRESHOLD)) {
+        reviewMapDownPos = null;
+        return;
+      }
+      reviewMapDownPos = null;
+      expandMapForViewport();
+    }
   });
 
   // SV側で縮小（こちらは座標ズレ問題がないので即時）
