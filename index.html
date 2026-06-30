@@ -119,11 +119,9 @@
     overflow: hidden; background: #aad;
     flex-shrink: 0;
   }
-  /* PC: ホバーで微拡大（従来） */
-  #sidebar:hover #mapWrap { height: 320px; }
-  /* PC: マップ操作中に2倍展開 */
-  #sidebar.expanded-pc { width: 680px; }
-  #sidebar.expanded-pc #mapWrap { height: 480px; }
+  /* PC: マップ操作中に展開 */
+  #sidebar.expanded-pc { width: min(833px, calc(100vw - 240px)); }
+  #sidebar.expanded-pc #mapWrap { height: min(588px, calc(100vh - 220px)); }
   #sidebar, #mapWrap { transition: width .2s ease, height .2s ease; }
   #map { width: 100%; height: 100%; }
 
@@ -390,7 +388,6 @@
 
     /* mapWrap: 固定高さ */
     #mapWrap { height: 200px; }
-    #sidebar:hover #mapWrap { height: 200px; }
     /* タッチ展開: 2倍 */
     #mapWrap.expanded { height: 400px !important; }
 
@@ -826,12 +823,16 @@ function isMobile() { return window.innerWidth <= 560; }
 function setMapExpanded(expanded) {
   document.getElementById('mapWrap').classList.toggle('expanded', expanded);
   if (map) google.maps.event.trigger(map, 'resize');
+  setTimeout(repositionSVZoom, 220);
 }
 
 function setPCMapExpanded(expanded) {
   document.getElementById('sidebar').classList.toggle('expanded-pc', expanded);
   // トランジション完了後にリサイズ
-  setTimeout(() => { if (map) google.maps.event.trigger(map, 'resize'); }, 220);
+  setTimeout(() => {
+    if (map) google.maps.event.trigger(map, 'resize');
+    repositionSVZoom();
+  }, 220);
 }
 
 function initMapExpandListeners() {
@@ -949,15 +950,16 @@ function repositionSVZoom() {
   // RIGHT_BOTTOM のコントロール群を探してbottomを上書き
   // Google Maps SVは右下コントロールを #pano 内に生成する
   const panoEl = document.getElementById('pano');
-  if (!panoEl) return;
+  const sidebarEl = document.getElementById('sidebar');
+  if (!panoEl || !sidebarEl) return;
+  const sidebarBottom = Math.ceil(sidebarEl.getBoundingClientRect().height) + 24;
   // gmnoprint のうち右側(right!=0)にあるものを対象にする
   const controls = panoEl.querySelectorAll('.gmnoprint');
   controls.forEach(el => {
     const style = window.getComputedStyle(el);
     // 右下に配置されているコントロール（right が設定されているもの）
     if (style.right !== 'auto' && parseInt(style.right) < 200) {
-      const sidebarH = window.innerWidth <= 560 ? 250 : 320;
-      el.style.bottom = sidebarH + 'px';
+      el.style.bottom = sidebarBottom + 'px';
     }
   });
 }

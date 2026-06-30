@@ -44,4 +44,4 @@ Everything lives in `index.html`:
 ### Map expand behavior
 
 - **Mobile**: `#mapWrap.expanded` class toggled on touch events (`touchstart` on map = expand, on pano = collapse).
-- **PC**: `#sidebar.expanded-pc` toggled on `mousedown` events, doubling sidebar width and map height.
+- **PC**: `#sidebar.expanded-pc` toggled on `mousedown` events, expanding the sidebar/map to a larger viewport-aware size.
