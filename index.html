@@ -66,6 +66,13 @@
   }
   #resultInfo.show { display: flex; }
   #resultInfo .ri-text { flex: 1; min-width: 0; }
+  #resultInfo .ri-actions {
+    flex-shrink: 0;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 6px;
+  }
   #resultInfo .ri-mapbtn {
     flex-shrink: 0;
     display: inline-flex; align-items: center; gap: 5px;
@@ -400,6 +407,22 @@
 
     /* subcontrols: ボタンを均等幅に */
     #subcontrols .btn { flex: 1; }
+
+    #resultInfo {
+      align-items: stretch;
+      flex-wrap: wrap;
+    }
+
+    #resultInfo .ri-actions {
+      width: 100%;
+      justify-content: stretch;
+    }
+
+    #resultInfo .ri-mapbtn {
+      flex: 1 1 0;
+      justify-content: center;
+      padding-inline: 8px;
+    }
   }
 </style>
 </head>
@@ -441,7 +464,10 @@
         <div class="result-val" id="distVal"></div>
         <div class="result-verdict" id="verdict"></div>
       </div>
-      <a class="ri-mapbtn" id="mapLinkBtn" href="#" target="_blank" rel="noopener">📍 地図で見る</a>
+      <div class="ri-actions">
+        <a class="ri-mapbtn" id="mapLinkBtn" href="#" target="_blank" rel="noopener">📍 地図で見る</a>
+        <a class="ri-mapbtn" id="plonkGuideBtn" href="https://www.plonkit.net/guide" target="_blank" rel="noopener">📖 Plonk It ガイド</a>
+      </div>
     </div>
     <div id="subcontrols">
       <button class="btn ghost" id="skipBtn">別の問題</button>
@@ -512,6 +538,140 @@
 
 <script>
 const STORAGE_KEY = 'streetguess_api_key';
+const PLONK_IT_GUIDE_TOP = 'https://www.plonkit.net/guide';
+const PLONK_IT_COUNTRY_SLUGS = Object.freeze({
+  ad: 'andorra',
+  ae: 'united-arab-emirates',
+  al: 'albania',
+  aq: 'antarctica',
+  ar: 'argentina',
+  as: 'american-samoa',
+  at: 'austria',
+  au: 'australia',
+  bd: 'bangladesh',
+  be: 'belgium',
+  bg: 'bulgaria',
+  bm: 'bermuda',
+  bo: 'bolivia',
+  br: 'brazil',
+  bt: 'bhutan',
+  bw: 'botswana',
+  by: 'belarus',
+  ca: 'canada',
+  cc: 'cocos-islands',
+  ch: 'switzerland',
+  cl: 'chile',
+  cn: 'china',
+  co: 'colombia',
+  cr: 'costa-rica',
+  cw: 'curacao',
+  cx: 'christmas-island',
+  cy: 'cyprus',
+  cz: 'czechia',
+  de: 'germany',
+  dk: 'denmark',
+  do: 'dominican-republic',
+  ec: 'ecuador',
+  ee: 'estonia',
+  eg: 'egypt',
+  es: 'spain',
+  fi: 'finland',
+  fk: 'falkland-islands',
+  fo: 'faroe-islands',
+  fr: 'france',
+  gb: 'united-kingdom',
+  gh: 'ghana',
+  gi: 'gibraltar',
+  gl: 'greenland',
+  gr: 'greece',
+  gs: 'south-georgia-sandwich-islands',
+  gt: 'guatemala',
+  gu: 'guam',
+  hk: 'hong-kong',
+  hr: 'croatia',
+  hu: 'hungary',
+  id: 'indonesia',
+  ie: 'ireland',
+  il: 'israel-west-bank',
+  im: 'isle-of-man',
+  in: 'india',
+  io: 'british-indian-ocean-territory',
+  iq: 'iraq',
+  is: 'iceland',
+  it: 'italy',
+  je: 'jersey',
+  jo: 'jordan',
+  jp: 'japan',
+  ke: 'kenya',
+  kg: 'kyrgyzstan',
+  kh: 'cambodia',
+  kr: 'south-korea',
+  kz: 'kazakhstan',
+  la: 'laos',
+  lb: 'lebanon',
+  li: 'liechtenstein',
+  lk: 'sri-lanka',
+  ls: 'lesotho',
+  lt: 'lithuania',
+  lu: 'luxembourg',
+  lv: 'latvia',
+  mc: 'monaco',
+  me: 'montenegro',
+  mg: 'madagascar',
+  mk: 'north-macedonia',
+  ml: 'mali',
+  mn: 'mongolia',
+  mo: 'macau',
+  mp: 'northern-mariana-islands',
+  mq: 'martinique',
+  mt: 'malta',
+  mx: 'mexico',
+  my: 'malaysia',
+  na: 'namibia',
+  ng: 'nigeria',
+  nl: 'netherlands',
+  no: 'norway',
+  np: 'nepal',
+  nz: 'new-zealand',
+  om: 'oman',
+  pa: 'panama',
+  pe: 'peru',
+  ph: 'philippines',
+  pk: 'pakistan',
+  pl: 'poland',
+  pm: 'saint-pierre-and-miquelon',
+  pn: 'pitcairn-islands',
+  pr: 'puerto-rico',
+  pt: 'portugal',
+  qa: 'qatar',
+  re: 'reunion',
+  ro: 'romania',
+  rs: 'serbia',
+  ru: 'russia',
+  rw: 'rwanda',
+  se: 'sweden',
+  sg: 'singapore',
+  si: 'slovenia',
+  sj: 'svalbard',
+  sk: 'slovakia',
+  sm: 'san-marino',
+  sn: 'senegal',
+  st: 'sao-tome-and-principe',
+  sz: 'eswatini',
+  th: 'thailand',
+  tn: 'tunisia',
+  tr: 'turkey',
+  tw: 'taiwan',
+  tz: 'tanzania',
+  ua: 'ukraine',
+  ug: 'uganda',
+  us: 'united-states',
+  uy: 'uruguay',
+  vi: 'us-virgin-islands',
+  vn: 'vietnam',
+  vu: 'vanuatu',
+  za: 'south-africa'
+});
 
 let map, pano, svService;
 let truePos = null;
@@ -522,6 +682,7 @@ let mapsLoaded = false;
 let roundHistory = []; // { truePos, guessPos, km } の配列
 let isReviewing = false; // 答え合わせ中フラグ
 let svSource = 'official'; // "official" | "all"
+let plonkGuideRequestId = 0;
 
 /* ---- localStorage キー管理 ---- */
 function getSavedKey() {
@@ -671,6 +832,40 @@ function verdictText(km) {
   return '地球は広い。次こそは。';
 }
 
+function getPlonkGuideUrl(countryCode) {
+  const slug = PLONK_IT_COUNTRY_SLUGS[String(countryCode || '').toLowerCase()];
+  return slug ? `https://www.plonkit.net/${slug}` : PLONK_IT_GUIDE_TOP;
+}
+
+function resetPlonkGuideLink() {
+  const btn = document.getElementById('plonkGuideBtn');
+  btn.href = PLONK_IT_GUIDE_TOP;
+  btn.title = '国別ガイドを確認する';
+}
+
+async function updatePlonkGuideLink(pos, requestId) {
+  const params = new URLSearchParams({
+    lat: String(pos.lat),
+    lon: String(pos.lng),
+    format: 'jsonv2',
+    addressdetails: '1',
+    zoom: '3',
+    'accept-language': 'en'
+  });
+
+  try {
+    const res = await fetch(`https://nominatim.openstreetmap.org/reverse?${params}`);
+    if (!res.ok) throw new Error(`Nominatim returned ${res.status}`);
+    const data = await res.json();
+    if (requestId !== plonkGuideRequestId) return;
+
+    const countryCode = data?.address?.country_code;
+    document.getElementById('plonkGuideBtn').href = getPlonkGuideUrl(countryCode);
+  } catch (e) {
+    if (requestId === plonkGuideRequestId) resetPlonkGuideLink();
+  }
+}
+
 function submitGuess() {
   if (!guessPos || !truePos) return;
   const km = haversine(guessPos, truePos);
@@ -688,6 +883,8 @@ function submitGuess() {
   // 正解地点のGoogleマップURL
   document.getElementById('mapLinkBtn').href =
     `https://www.google.com/maps/search/?api=1&query=${truePos.lat},${truePos.lng}`;
+  resetPlonkGuideLink();
+  updatePlonkGuideLink({...truePos}, ++plonkGuideRequestId);
   // 確定するボタン → もう一回遊ぶ に差し替え
   const gBtn = document.getElementById('guessBtn');
   gBtn.textContent = 'もう一回遊ぶ';
