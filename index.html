@@ -510,7 +510,7 @@
         </div>
         <div id="keyError"></div>
         <div class="note">
-          🔒 <strong>プライバシー保護：</strong>キーはこのブラウザの <code>localStorage</code> に保存されます。Google Maps API への認証以外の目的で外部に送信することはありません。
+          🔒 <strong>プライバシー保護：</strong>キーはこのブラウザの <code>localStorage</code> に保存されます。このアプリからは Google Maps API への認証以外の目的で外部に送信しません。
         </div>
         <div class="kactions">
           <button class="btn" id="keySaveBtn" onclick="saveKey()">保存してプレイ</button>
@@ -525,13 +525,12 @@
           <li><a href="https://console.cloud.google.com/" target="_blank">Google Cloud Console</a> を開き、プロジェクトを作成（または選択）する</li>
           <li>左メニュー「APIとサービス」→「ライブラリ」を開く</li>
           <li><code>Maps JavaScript API</code> を検索して「有効にする」</li>
-          <li>同様に <code>Street View Static API</code> も有効にする</li>
           <li>「APIとサービス」→「認証情報」→「認証情報を作成」→「APIキー」</li>
           <li>発行されたキーをコピーして上の欄に貼り付ける</li>
         </ol>
         <div class="note">
-          💳 <strong>請求先アカウント（クレジットカード）の登録が必須</strong>ですが、月 $200 分の無料枠があるため個人利用では通常無料の範囲内に収まります。<br><br>
-          🔒 <strong>キーの保護：</strong>Cloud Console でキーをクリック →「アプリケーションの制限」→「ウェブサイト」に <code>file://*</code> や使用するドメインを追加すると他者に悪用されにくくなります。<br><br>
+          💳 <strong>料金：</strong>Google Maps Platform の利用には請求先アカウントと支払い方法の設定が必要です。StreetGuess で主に使う無料枠は <code>Dynamic Maps</code> が月 10,000 回、<code>Dynamic Street View</code> が月 5,000 回です。課金を避けたい場合は、専用プロジェクトで Maps JavaScript API の割り当て上限を無料枠以下に下げてください。<br><br>
+          🔒 <strong>キーの利用元制限：</strong>必須ではありませんが、API キーを使えるサイトを制限できます。公開ページで遊ぶ場合は「アプリケーションの制限」→「ウェブサイト」に <code>https://budoucha.github.io/*</code> を追加します。「API の制限」は <code>Maps JavaScript API</code> のみにします。ブラウザ上で API 認証に使われるキーは開発者ツール等で確認できるため、不安がある場合は StreetGuess 専用キーを使ってください。<br><br>
           💾 <strong>入力したキーはこのブラウザの localStorage に保存</strong>されます。ファイルを再度開いても入力不要です。
         </div>
         <div style="margin-top: 16px; border-top: 1px solid var(--line); padding-top: 12px; text-align: center; font-size: 12px;">

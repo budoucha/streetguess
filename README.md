@@ -17,7 +17,6 @@ Google Street View を使ったロケーション当てゲームです。GeoGues
 Google Maps API キー（以下の API を有効化）
 
 - Maps JavaScript API
-- Street View Static API
 
 キーの取得方法はアプリ内の「API キーの取得方法」を参照してください。
 
@@ -35,12 +34,16 @@ git clone <repo-url>
 # index.html をブラウザで開く
 ```
 
+公開ページ用に URL 制限した API キーでは、ローカルで直接開いた `index.html` が動かない場合があります。ローカルでもキーの利用元を制限したい場合は、公開ページ用とは別のキーを用意し、ローカルでの開き方に合わせた許可先を設定してください。
+
 ### ローカルサーバーで開く（PWA 機能を使う場合）
 
 ```sh
 python -m http.server 8080
 # http://localhost:8080 をブラウザで開く
 ```
+
+ローカルサーバーで使うキーに URL 制限を設定する場合は、実際に開く URL（例: `http://localhost:8080/*`）を許可先に追加してください。
 
 初回起動時に API キー入力モーダルが表示されます。キーを入力して「保存してプレイ」を押すと開始できます。
 
