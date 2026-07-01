@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 StreetGuess is a GeoGuessr-style browser game written as a **single self-contained HTML file** (`index.html`). There is no build step, no package manager, and no bundler. Open the file directly in a browser or serve it with any static file server.
 
-The app requires a user-supplied Google Maps API key (stored in `localStorage` under `streetguess_api_key`). Required APIs: **Maps JavaScript API** and **Street View Static API**.
+The app requires a user-supplied Google Maps API key (stored in `localStorage` under `streetguess_api_key`). Required API: **Maps JavaScript API**.
 
 ## Running locally
 
