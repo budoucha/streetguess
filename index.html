@@ -66,6 +66,8 @@
   }
   #resultInfo.show { display: flex; }
   #resultInfo .ri-text { flex: 1; min-width: 0; }
+  #resultInfo .ri-metrics { display: flex; gap: 18px; }
+  #resultInfo .ri-metric { min-width: 0; }
   #resultInfo .ri-actions {
     flex-shrink: 0;
     display: flex;
@@ -95,6 +97,7 @@
     font-size: 26px; font-weight: 800; letter-spacing: -0.02em;
     color: var(--paper); line-height: 1.1;
   }
+  #resultInfo .result-score { color: var(--accent); }
   #resultInfo .result-verdict {
     font-size: 12px; color: rgba(243,237,225,0.65); margin-top: 2px;
   }
@@ -466,8 +469,16 @@
   <div id="sidebar">
     <div id="resultInfo">
       <div class="ri-text">
-        <div class="result-dist">ピンからの距離</div>
-        <div class="result-val" id="distVal"></div>
+        <div class="ri-metrics">
+          <div class="ri-metric">
+            <div class="result-dist">ピンからの距離</div>
+            <div class="result-val" id="distVal"></div>
+          </div>
+          <div class="ri-metric">
+            <div class="result-dist">スコア</div>
+            <div class="result-val result-score" id="scoreVal"></div>
+          </div>
+        </div>
         <div class="result-verdict" id="verdict"></div>
       </div>
       <div class="ri-actions">
@@ -684,10 +695,12 @@ let guessMarker = null;
 let guessPos = null;
 let panoStart = null;
 let mapsLoaded = false;
-let roundHistory = []; // { truePos, guessPos, km } の配列
+let roundHistory = []; // { truePos, guessPos, km, score } の配列
 let isReviewing = false; // 答え合わせ中フラグ
 let svSource = 'official'; // "official" | "all"
 let plonkGuideRequestId = 0;
+// 世界マップを覆う正方形の対角線（km）。距離と単位をそろえて得点を計算する。
+const WORLD_MAP_SIZE_KM = 14916.862;
 
 /* ---- localStorage キー管理 ---- */
 function getSavedKey() {
@@ -837,6 +850,10 @@ function verdictText(km) {
   return '地球は広い。次こそは。';
 }
 
+function calculateScore(km) {
+  return Math.round(5000 * Math.exp(-10 * km / WORLD_MAP_SIZE_KM));
+}
+
 function getPlonkGuideUrl(countryCode) {
   const slug = PLONK_IT_COUNTRY_SLUGS[String(countryCode || '').toLowerCase()];
   return slug ? `https://www.plonkit.net/${slug}` : PLONK_IT_GUIDE_TOP;
@@ -874,14 +891,16 @@ async function updatePlonkGuideLink(pos, requestId) {
 function submitGuess() {
   if (!guessPos || !truePos) return;
   const km = haversine(guessPos, truePos);
+  const score = calculateScore(km);
 
   // 今ラウンドを履歴に追加
-  roundHistory.push({ truePos: {...truePos}, guessPos: {...guessPos}, km });
+  roundHistory.push({ truePos: {...truePos}, guessPos: {...guessPos}, km, score });
   isReviewing = true;
   if (guessMarker) { guessMarker.setMap(null); }
 
   document.getElementById('distVal').textContent =
     km < 1 ? `${Math.round(km*1000)} m` : `${km.toLocaleString('ja-JP',{maximumFractionDigits:0})} km`;
+  document.getElementById('scoreVal').textContent = `${score.toLocaleString('ja-JP')} 点`;
   document.getElementById('verdict').textContent = verdictText(km);
   document.getElementById('resultInfo').classList.add('show');
   document.getElementById('subcontrols').classList.add('hidden');
