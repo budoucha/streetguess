@@ -29,6 +29,153 @@
     overflow: hidden;
   }
 
+  .hidden { display: none !important; }
+
+  /* ---- メインメニュー: 旅程を組むブリーフィングボード ---- */
+  #mainMenu, #summaryScreen {
+    position: fixed; inset: 0; z-index: 75;
+    display: grid; place-items: center;
+    padding: 24px;
+    overflow-y: auto;
+    background:
+      linear-gradient(rgba(20,17,13,.82), rgba(20,17,13,.94)),
+      repeating-linear-gradient(0deg, transparent 0 39px, rgba(243,237,225,.035) 39px 40px),
+      repeating-linear-gradient(90deg, transparent 0 39px, rgba(243,237,225,.035) 39px 40px);
+    backdrop-filter: blur(8px);
+  }
+  .menu-board {
+    width: min(900px, 100%);
+    color: var(--paper);
+    border: 1px solid rgba(243,237,225,.22);
+    border-radius: 12px;
+    background: rgba(20,17,13,.92);
+    box-shadow: 0 28px 80px rgba(0,0,0,.55);
+    overflow: hidden;
+  }
+  .menu-head {
+    display: flex; justify-content: space-between; gap: 24px; align-items: end;
+    padding: 28px 30px 24px;
+    border-bottom: 1px solid rgba(243,237,225,.15);
+  }
+  .menu-brand {
+    font-family: Georgia, "Yu Mincho", serif;
+    font-size: clamp(38px, 7vw, 68px);
+    line-height: .9; letter-spacing: -.055em;
+  }
+  .menu-brand b { color: var(--accent); }
+  .menu-kicker {
+    margin-bottom: 9px; color: rgba(243,237,225,.58);
+    font-size: 10px; font-weight: 800; letter-spacing: .24em; text-transform: uppercase;
+  }
+  .menu-date {
+    flex-shrink: 0; text-align: right;
+    font: 700 12px/1.5 ui-monospace, "SFMono-Regular", Consolas, monospace;
+    color: rgba(243,237,225,.62);
+  }
+  .menu-body { display: grid; grid-template-columns: 1fr 1.2fr; }
+  .mode-list { padding: 22px; border-right: 1px solid rgba(243,237,225,.15); }
+  .mode-card {
+    width: 100%; margin-bottom: 10px; padding: 18px;
+    text-align: left; color: var(--paper); font: inherit;
+    border: 1px solid rgba(243,237,225,.16); border-radius: 8px;
+    background: rgba(243,237,225,.035); cursor: pointer;
+    transition: border-color .16s, background .16s, transform .16s;
+  }
+  .mode-card:hover { transform: translateX(3px); border-color: rgba(243,237,225,.38); }
+  .mode-card.active { border-color: var(--accent); background: rgba(200,85,61,.13); }
+  .mode-name { display: block; font-size: 19px; font-weight: 800; }
+  .mode-meta { display: block; margin-top: 6px; font-size: 12px; line-height: 1.6; color: rgba(243,237,225,.58); }
+  .mode-stamp {
+    float: right; margin-left: 10px; padding: 4px 7px;
+    border: 1px solid currentColor; border-radius: 3px;
+    color: var(--accent); font: 800 9px/1 ui-monospace, monospace;
+    letter-spacing: .12em; transform: rotate(2deg);
+  }
+  .menu-options { padding: 24px 28px 26px; }
+  .option-title { font-size: 11px; letter-spacing: .18em; color: rgba(243,237,225,.5); text-transform: uppercase; }
+  .option-row {
+    display: flex; align-items: center; justify-content: space-between; gap: 18px;
+    min-height: 58px; border-bottom: 1px solid rgba(243,237,225,.1);
+  }
+  .option-copy strong { display: block; font-size: 14px; }
+  .option-copy small { display: block; margin-top: 3px; color: rgba(243,237,225,.48); font-size: 11px; }
+  .option-control { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+  .option-control select, .option-control input[type="number"] {
+    min-width: 110px; padding: 8px 9px;
+    color: var(--ink); background: var(--paper); border: 0; border-radius: 4px;
+    font: inherit; font-size: 12px; font-weight: 700;
+  }
+  #timeLimitInput:disabled {
+    color: #7b746b;
+    background: #c9c2b7;
+    cursor: not-allowed;
+    opacity: .68;
+  }
+  #timeLimitControl.disabled small { color: #81796f; }
+  #countrySelect { width: min(220px, 36vw); }
+  .toggle-input { width: 18px; height: 18px; accent-color: var(--accent); }
+  .challenge-spec {
+    margin-top: 18px; padding: 18px;
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px;
+    background: rgba(243,237,225,.12); border-radius: 6px; overflow: hidden;
+  }
+  .challenge-spec div { padding: 14px 10px; text-align: center; background: var(--ink); }
+  .challenge-spec b { display: block; font: 800 22px/1 ui-monospace, monospace; color: var(--accent); }
+  .challenge-spec span { display: block; margin-top: 6px; font-size: 10px; color: rgba(243,237,225,.52); }
+  .menu-note { margin-top: 14px; font-size: 11px; line-height: 1.55; color: rgba(243,237,225,.45); }
+  #menuError { min-height: 18px; margin-top: 12px; color: #f09580; font-size: 12px; }
+  .menu-start {
+    width: 100%; margin-top: 10px; padding: 14px 18px;
+    border: 0; border-radius: 5px; background: var(--accent); color: var(--paper);
+    font: 800 15px/1 inherit; cursor: pointer;
+    box-shadow: none;
+  }
+  .menu-start:hover { background: var(--accent-deep); }
+  .menu-start:disabled { opacity: .45; cursor: wait; }
+  button:focus-visible, select:focus-visible, input:focus-visible, a:focus-visible {
+    outline: 3px solid #f2a38f; outline-offset: 3px;
+  }
+
+  #gameStatus {
+    position: fixed; top: 68px; left: 50%; z-index: 36;
+    transform: translateX(-50%);
+    display: flex; align-items: center;
+    color: var(--paper); font: 800 19px/1 ui-monospace, Consolas, monospace;
+    text-shadow: 0 1px 4px rgba(0,0,0,.8);
+  }
+  #gameStatus span { min-width: 74px; padding: 8px 12px; text-align: center; border-radius: 4px; background: rgba(20,17,13,.78); }
+  #timerVal.warning { color: #ffd166; }
+  #timerVal.danger { color: #ff665c; animation: timerPulse .55s ease-in-out infinite alternate; }
+  @keyframes timerPulse { to { transform: scale(1.06); } }
+  #countdownFlash {
+    position: fixed; inset: 0; z-index: 65;
+    pointer-events: none; opacity: 0;
+    background: radial-gradient(ellipse at center,
+      transparent 48%, rgba(196,24,24,.08) 68%, rgba(218,35,31,.92) 100%);
+  }
+  #countdownFlash.flash { animation: edgeFlash .72s ease-out; }
+  @keyframes edgeFlash {
+    0% { opacity: 0; }
+    18% { opacity: 1; }
+    100% { opacity: 0; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+  }
+  #menuBtn {
+    position: fixed; top: 12px; right: 12px; z-index: 50;
+    width: 36px; height: 36px; border: 0; border-radius: 50%;
+    color: var(--paper); background: rgba(20,17,13,.72); cursor: pointer;
+    font-size: 17px; box-shadow: 0 2px 8px rgba(0,0,0,.4);
+  }
+
+  .summary-board { width: min(620px, 100%); padding: 28px; }
+  .summary-title { font: 700 clamp(32px, 7vw, 54px)/1 Georgia, "Yu Mincho", serif; }
+  .summary-total { margin: 18px 0 22px; font: 800 clamp(42px, 9vw, 72px)/1 ui-monospace, monospace; color: var(--accent); }
+  #summaryRounds { display: grid; gap: 6px; }
+  .summary-round { display: flex; justify-content: space-between; padding: 9px 11px; background: rgba(243,237,225,.06); font-size: 13px; }
+  .summary-actions { display: flex; gap: 8px; margin-top: 22px; }
+
   #pano { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #222; }
 
   #hud {
@@ -66,7 +213,7 @@
   }
   #resultInfo.show { display: flex; }
   #resultInfo .ri-text { flex: 1; min-width: 0; }
-  #resultInfo .ri-metrics { display: flex; gap: 18px; }
+  #resultInfo .ri-metrics { display: flex; flex-wrap: wrap; gap: 8px 18px; }
   #resultInfo .ri-metric { min-width: 0; }
   #resultInfo .ri-actions {
     flex-shrink: 0;
@@ -104,7 +251,7 @@
 
   /* 設定ボタン */
   #settingsBtn {
-    position: fixed; top: 12px; right: 12px; z-index: 50;
+    position: fixed; top: 12px; right: 56px; z-index: 50;
     background: rgba(20,17,13,0.72); color: var(--paper);
     border: none; border-radius: 50%; width: 36px; height: 36px;
     font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center;
@@ -137,6 +284,14 @@
   #subcontrols {
     width: 100%; display: flex; gap: 8px;
     order: 3;
+  }
+  #roundIndicator {
+    flex: 1; display: flex; align-items: center; justify-content: center;
+    padding: 11px 14px; border-radius: 4px;
+    color: var(--paper); background: rgba(20,17,13,.82);
+    font: 800 13px/1 ui-monospace, Consolas, monospace;
+    letter-spacing: .08em;
+    box-shadow: 0 4px 14px rgba(0,0,0,.35);
   }
   /* 答え合わせ時はsubcontrolsを非表示 */
   #subcontrols.hidden { display: none; }
@@ -408,9 +563,23 @@
     #mapWrap.expanded { height: 400px !important; }
 
     /* HUD・コンパス・設定ボタン: SVエリア内に絶対配置のまま */
-    #hud, #compass, #settingsBtn, #sourceToggleWrap {
+    #hud, #compass, #settingsBtn, #menuBtn, #gameStatus, #sourceToggleWrap {
       position: fixed !important; /* SVがrelativeになっても fixed は viewport基準 */
     }
+
+    #mainMenu, #summaryScreen { padding: 10px; place-items: start center; }
+    .menu-board { margin-block: 8px; }
+    .menu-head { align-items: start; padding: 22px 20px 18px; }
+    .menu-date { display: none; }
+    .menu-body { grid-template-columns: 1fr; }
+    .mode-list { padding: 14px; border-right: 0; border-bottom: 1px solid rgba(243,237,225,.15); }
+    .mode-card { padding: 14px; }
+    .menu-options { padding: 18px; }
+    .option-row { align-items: flex-start; padding-block: 11px; }
+    .option-control { margin-top: 2px; }
+    #countrySelect { width: 150px; }
+    #gameStatus { top: 66px; left: 50%; right: auto; }
+    .summary-board { margin-block: 8px; padding: 22px 18px; }
 
     #compassTrack { width: 200px; }
 
@@ -421,6 +590,8 @@
       align-items: stretch;
       flex-wrap: wrap;
     }
+
+    #resultInfo .ri-metrics { flex-wrap: wrap; gap: 8px 16px; }
 
     #resultInfo .ri-actions {
       width: 100%;
@@ -436,6 +607,80 @@
 </style>
 </head>
 <body>
+  <section id="mainMenu" aria-label="メインメニュー">
+    <div class="menu-board">
+      <header class="menu-head">
+        <div>
+          <div class="menu-kicker">Choose your route</div>
+          <h1 class="menu-brand">Street<b>Guess</b></h1>
+        </div>
+        <div class="menu-date">5 ROUNDS<br>3 MINUTES EACH</div>
+      </header>
+      <div class="menu-body">
+        <div class="mode-list" role="radiogroup" aria-label="ゲームモード">
+          <button class="mode-card active" type="button" data-game-mode="free" role="radio" aria-checked="true">
+            <span class="mode-stamp">CUSTOM</span>
+            <span class="mode-name">自由プレイ</span>
+            <span class="mode-meta">ラウンド数を決めず、自分好みのルールで世界を巡ります。</span>
+          </button>
+          <button class="mode-card" type="button" data-game-mode="challenge" role="radio" aria-checked="false">
+            <span class="mode-stamp">CHALLENGE</span>
+            <span class="mode-name">チャレンジ</span>
+            <span class="mode-meta">ランダムな5地点。各ラウンド3分、合計25,000点満点。</span>
+          </button>
+        </div>
+        <div class="menu-options">
+          <div id="freeOptions">
+            <div class="option-title">自由プレイ設定</div>
+            <label class="option-row">
+              <span class="option-copy"><strong>時間制限</strong><small>30秒単位で設定</small></span>
+              <span class="option-control" id="timeLimitControl">
+                <input class="toggle-input" id="timerEnabled" type="checkbox">
+                <input id="timeLimitInput" type="number" value="120" min="30" max="1800" step="30" aria-label="制限時間（秒）">
+                <small>秒</small>
+              </span>
+            </label>
+            <label class="option-row">
+              <span class="option-copy"><strong>初期位置から移動</strong><small>視点の回転とズームは常に可能</small></span>
+              <span class="option-control"><input class="toggle-input" id="movementAllowed" type="checkbox" checked></span>
+            </label>
+            <label class="option-row">
+              <span class="option-copy"><strong>出題エリア</strong><small>公式画像の道路カバレッジがある国</small></span>
+              <span class="option-control"><select id="countrySelect" aria-label="出題する国"></select></span>
+            </label>
+            <p class="menu-note">国境ポリゴン内で候補地点を作り、実際のStreet View地点も国境内にあることを確認します。国を選ぶと、その国を囲む範囲の対角線が得点計算のサイズになります。国境データ: Natural Earth / world-atlas。</p>
+          </div>
+          <div id="challengeOptions" class="hidden">
+            <div class="option-title">チャレンジルール</div>
+            <div class="challenge-spec">
+              <div><b>5</b><span>ラウンド</span></div>
+              <div><b>3:00</b><span>各ラウンド</span></div>
+              <div><b>25K</b><span>満点</span></div>
+            </div>
+            <p class="menu-note">開始するたびにランダムな5地点を出題します。ラウンドのスコアを合計し、5ラウンド終了後に成績を表示します。</p>
+          </div>
+          <div id="menuError" role="alert"></div>
+          <button class="menu-start" id="startGameBtn" type="button" disabled>地図を準備中…</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="summaryScreen" class="hidden" aria-label="チャレンジ結果">
+    <div class="menu-board summary-board">
+      <div class="menu-kicker">Challenge complete</div>
+      <h2 class="summary-title">5ラウンド完了</h2>
+      <div class="summary-total" id="summaryTotal"></div>
+      <div id="summaryRounds"></div>
+      <div class="summary-actions">
+        <button class="btn ghost" id="summaryMenuBtn" type="button">メインメニュー</button>
+        <button class="btn" id="retryChallengeBtn" type="button">もう一度挑戦</button>
+      </div>
+    </div>
+  </section>
+
+  <div id="countdownFlash" aria-hidden="true"></div>
+
   <div id="pano"></div>
 
   <!-- コンパス -->
@@ -456,7 +701,11 @@
     </div>
   </div>
 
+  <div id="gameStatus" class="hidden" aria-live="polite">
+    <span id="timerVal"></span>
+  </div>
   <button id="settingsBtn" title="API キー設定">⚙️</button>
+  <button id="menuBtn" class="hidden" title="メインメニュー">☰</button>
 
   <!-- ソーストグル: 左上に固定 -->
   <div id="sourceToggleWrap">
@@ -478,6 +727,10 @@
             <div class="result-dist">スコア</div>
             <div class="result-val result-score" id="scoreVal"></div>
           </div>
+          <div class="ri-metric hidden" id="totalMetric">
+            <div class="result-dist">合計</div>
+            <div class="result-val" id="totalScoreVal"></div>
+          </div>
         </div>
         <div class="result-verdict" id="verdict"></div>
       </div>
@@ -488,6 +741,7 @@
     </div>
     <div id="subcontrols">
       <button class="btn ghost" id="skipBtn">別の問題</button>
+      <div id="roundIndicator" class="hidden" aria-live="polite"></div>
       <button class="btn ghost" id="panBtn">出発地点に戻る</button>
     </div>
     <div id="mapWrap">
@@ -552,8 +806,10 @@
     </div>
   </div>
 
+<script src="https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/dist/topojson-client.min.js"></script>
 <script>
 const STORAGE_KEY = 'streetguess_api_key';
+const FREE_PLAY_SETTINGS_KEY = 'streetguess_free_play_settings';
 const PLONK_IT_GUIDE_TOP = 'https://www.plonkit.net/guide';
 const PLONK_IT_COUNTRY_SLUGS = Object.freeze({
   ad: 'andorra',
@@ -703,6 +959,47 @@ let collapsedMapPointer = null;
 let suppressNextMapClick = false;
 // 世界マップを覆う正方形の対角線（km）。距離と単位をそろえて得点を計算する。
 const WORLD_MAP_SIZE_KM = 14916.862;
+const COUNTRY_ATLAS_URL = 'https://cdn.jsdelivr.net/npm/world-atlas@2.0.2/countries-50m.json';
+const COVERED_COUNTRIES = Object.freeze([
+  ['008','al','アルバニア'], ['020','ad','アンドラ'], ['032','ar','アルゼンチン'],
+  ['036','au','オーストラリア'], ['040','at','オーストリア'], ['050','bd','バングラデシュ'],
+  ['056','be','ベルギー'], ['068','bo','ボリビア'], ['072','bw','ボツワナ'],
+  ['076','br','ブラジル'], ['100','bg','ブルガリア'], ['116','kh','カンボジア'],
+  ['124','ca','カナダ'], ['152','cl','チリ'], ['170','co','コロンビア'],
+  ['191','hr','クロアチア'], ['196','cy','キプロス'], ['203','cz','チェコ'],
+  ['208','dk','デンマーク'], ['218','ec','エクアドル'], ['233','ee','エストニア'],
+  ['748','sz','エスワティニ'], ['246','fi','フィンランド'], ['250','fr','フランス'],
+  ['276','de','ドイツ'], ['288','gh','ガーナ'], ['300','gr','ギリシャ'],
+  ['320','gt','グアテマラ'], ['348','hu','ハンガリー'], ['352','is','アイスランド'],
+  ['360','id','インドネシア'], ['372','ie','アイルランド'], ['376','il','イスラエル'],
+  ['380','it','イタリア'], ['392','jp','日本'], ['400','jo','ヨルダン'],
+  ['404','ke','ケニア'], ['417','kg','キルギス'], ['428','lv','ラトビア'],
+  ['426','ls','レソト'], ['440','lt','リトアニア'], ['442','lu','ルクセンブルク'],
+  ['458','my','マレーシア'], ['470','mt','マルタ'], ['484','mx','メキシコ'],
+  ['496','mn','モンゴル'], ['499','me','モンテネグロ'], ['528','nl','オランダ'],
+  ['554','nz','ニュージーランド'], ['566','ng','ナイジェリア'], ['807','mk','北マケドニア'],
+  ['578','no','ノルウェー'], ['604','pe','ペルー'], ['608','ph','フィリピン'],
+  ['616','pl','ポーランド'], ['620','pt','ポルトガル'], ['634','qa','カタール'],
+  ['642','ro','ルーマニア'], ['646','rw','ルワンダ'], ['686','sn','セネガル'],
+  ['688','rs','セルビア'], ['702','sg','シンガポール'], ['703','sk','スロバキア'],
+  ['705','si','スロベニア'], ['710','za','南アフリカ'], ['410','kr','韓国'],
+  ['724','es','スペイン'], ['144','lk','スリランカ'], ['752','se','スウェーデン'],
+  ['756','ch','スイス'], ['158','tw','台湾'], ['764','th','タイ'],
+  ['792','tr','トルコ'], ['800','ug','ウガンダ'], ['804','ua','ウクライナ'],
+  ['826','gb','イギリス'], ['840','us','アメリカ合衆国'], ['858','uy','ウルグアイ']
+]);
+
+let selectedMenuMode = 'free';
+let gameActive = false;
+let gameConfig = null;
+let roundNumber = 1;
+let roundRandom = Math.random;
+let currentMapSizeKm = WORLD_MAP_SIZE_KM;
+let currentCountryGeometry = null;
+let countryAtlasPromise = null;
+let roundTimerId = null;
+let roundDeadline = 0;
+let lastCountdownFlashSecond = null;
 
 /* ---- localStorage キー管理 ---- */
 function getSavedKey() {
@@ -711,6 +1008,28 @@ function getSavedKey() {
 }
 function setSavedKey(k) {
   try { localStorage.setItem(STORAGE_KEY, k); } catch(e) {}
+}
+
+function getSavedFreePlaySettings() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(FREE_PLAY_SETTINGS_KEY) || 'null');
+    return saved && typeof saved === 'object' ? saved : null;
+  } catch (e) {
+    return null;
+  }
+}
+
+function saveFreePlaySettings() {
+  const seconds = Number(document.getElementById('timeLimitInput').value);
+  const countryId = document.getElementById('countrySelect').value;
+  try {
+    localStorage.setItem(FREE_PLAY_SETTINGS_KEY, JSON.stringify({
+      timerEnabled: document.getElementById('timerEnabled').checked,
+      timeLimitSeconds: Number.isFinite(seconds) ? seconds : 120,
+      allowMovement: document.getElementById('movementAllowed').checked,
+      countryId
+    }));
+  } catch (e) {}
 }
 
 function toggleKeyVisible() {
@@ -760,6 +1079,240 @@ function toggleTips(btn) {
 
 document.getElementById('settingsBtn').addEventListener('click', () => openKeyModal(true));
 
+/* ---- メインメニュー / モード設定 ---- */
+function populateCountrySelect() {
+  const select = document.getElementById('countrySelect');
+  select.innerHTML = '<option value="world">世界全体</option>' + COVERED_COUNTRIES
+    .map(([id, code, name]) => `<option value="${id}" data-code="${code}">${name}</option>`)
+    .join('');
+}
+
+function syncTimeLimitControl() {
+  const enabled = document.getElementById('timerEnabled').checked;
+  document.getElementById('timeLimitInput').disabled = !enabled;
+  document.getElementById('timeLimitControl').classList.toggle('disabled', !enabled);
+}
+
+function restoreFreePlaySettings() {
+  const saved = getSavedFreePlaySettings();
+  if (!saved) {
+    syncTimeLimitControl();
+    return;
+  }
+  const timerEnabled = document.getElementById('timerEnabled');
+  const timeLimitInput = document.getElementById('timeLimitInput');
+  const movementAllowed = document.getElementById('movementAllowed');
+  const countrySelect = document.getElementById('countrySelect');
+  timerEnabled.checked = saved.timerEnabled === true;
+  if (Number.isFinite(saved.timeLimitSeconds)) {
+    timeLimitInput.value = String(Math.min(1800, Math.max(30, Math.round(saved.timeLimitSeconds / 30) * 30)));
+  }
+  if (typeof saved.allowMovement === 'boolean') movementAllowed.checked = saved.allowMovement;
+  if ([...countrySelect.options].some(option => option.value === saved.countryId)) countrySelect.value = saved.countryId;
+  syncTimeLimitControl();
+}
+
+function selectMenuMode(mode) {
+  selectedMenuMode = mode;
+  document.querySelectorAll('[data-game-mode]').forEach(btn => {
+    const selected = btn.dataset.gameMode === mode;
+    btn.classList.toggle('active', selected);
+    btn.setAttribute('aria-checked', String(selected));
+  });
+  document.getElementById('freeOptions').classList.toggle('hidden', mode !== 'free');
+  document.getElementById('challengeOptions').classList.toggle('hidden', mode !== 'challenge');
+  document.getElementById('menuError').textContent = '';
+}
+
+function geometryPolygons(feature) {
+  if (!feature?.geometry) return [];
+  return feature.geometry.type === 'Polygon'
+    ? [feature.geometry.coordinates]
+    : feature.geometry.type === 'MultiPolygon' ? feature.geometry.coordinates : [];
+}
+
+function polygonBounds(polygon) {
+  const points = polygon[0] || [];
+  return points.reduce((b, [lng, lat]) => ({
+    minLat: Math.min(b.minLat, lat), maxLat: Math.max(b.maxLat, lat),
+    minLng: Math.min(b.minLng, lng), maxLng: Math.max(b.maxLng, lng)
+  }), { minLat: 90, maxLat: -90, minLng: 180, maxLng: -180 });
+}
+
+function pointInRing(lng, lat, ring) {
+  let inside = false;
+  for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+    const [xi, yi] = ring[i], [xj, yj] = ring[j];
+    if ((yi > lat) !== (yj > lat) && lng < (xj - xi) * (lat - yi) / (yj - yi) + xi) inside = !inside;
+  }
+  return inside;
+}
+
+function pointInPolygon(pos, polygon) {
+  if (!pointInRing(pos.lng, pos.lat, polygon[0])) return false;
+  return !polygon.slice(1).some(hole => pointInRing(pos.lng, pos.lat, hole));
+}
+
+function pointInCountry(pos, country) {
+  return country.polygons.some(polygon => pointInPolygon(pos, polygon));
+}
+
+function countryMapSizeKm(polygons) {
+  const coords = polygons.flatMap(polygon => polygon[0] || []);
+  const latBounds = coords.reduce((bounds, point) => ({
+    min: Math.min(bounds.min, point[1]), max: Math.max(bounds.max, point[1])
+  }), { min: 90, max: -90 });
+  const minLat = latBounds.min;
+  const maxLat = latBounds.max;
+  const longitudes = coords.map(p => (p[0] + 360) % 360).sort((a, b) => a - b);
+  let largestGap = -1;
+  let arcStart = longitudes[0] || 0;
+  for (let i = 0; i < longitudes.length; i++) {
+    const current = longitudes[i];
+    const next = i === longitudes.length - 1 ? longitudes[0] + 360 : longitudes[i + 1];
+    if (next - current > largestGap) {
+      largestGap = next - current;
+      arcStart = next % 360;
+    }
+
+  }
+  const lngSpan = 360 - largestGap;
+  return Math.max(1, haversine(
+    { lat: minLat, lng: arcStart },
+    { lat: maxLat, lng: arcStart + lngSpan }
+  ));
+}
+
+async function loadCountryGeometry(countryId) {
+  if (!countryAtlasPromise) {
+    countryAtlasPromise = fetch(COUNTRY_ATLAS_URL).then(res => {
+      if (!res.ok) throw new Error(`国境データの取得に失敗しました (${res.status})`);
+      return res.json();
+    }).then(atlas => {
+      if (!window.topojson) throw new Error('国境データの変換ライブラリを読み込めませんでした');
+      return topojson.feature(atlas, atlas.objects.countries).features;
+    });
+  }
+  const features = await countryAtlasPromise;
+  const feature = features.find(item => String(item.id).padStart(3, '0') === countryId);
+  const polygons = geometryPolygons(feature);
+  if (!polygons.length) throw new Error('選択した国の国境データが見つかりません');
+  const components = polygons.map(polygon => {
+    const bounds = polygonBounds(polygon);
+    const latMid = (bounds.minLat + bounds.maxLat) / 2;
+    const weight = Math.max(.0001,
+      (bounds.maxLat - bounds.minLat) * (bounds.maxLng - bounds.minLng) * Math.cos(latMid * Math.PI / 180));
+    return { polygon, bounds, weight };
+  });
+  return { polygons, components, mapSizeKm: countryMapSizeKm(polygons) };
+}
+
+function randomCountryPoint(country, rng) {
+  const totalWeight = country.components.reduce((sum, item) => sum + item.weight, 0);
+  for (let tries = 0; tries < 500; tries++) {
+    let pick = rng() * totalWeight;
+    const component = country.components.find(item => (pick -= item.weight) <= 0) || country.components.at(-1);
+    const { bounds, polygon } = component;
+    const pos = {
+      lat: bounds.minLat + rng() * (bounds.maxLat - bounds.minLat),
+      lng: bounds.minLng + rng() * (bounds.maxLng - bounds.minLng)
+    };
+    if (pointInPolygon(pos, polygon)) return pos;
+  }
+  throw new Error('国境内の候補地点を生成できませんでした');
+}
+
+function readFreePlayConfig() {
+  const timerEnabled = document.getElementById('timerEnabled').checked;
+  const rawSeconds = Number(document.getElementById('timeLimitInput').value);
+  const seconds = Math.min(1800, Math.max(30, Math.round(rawSeconds / 30) * 30));
+  document.getElementById('timeLimitInput').value = String(seconds);
+  saveFreePlaySettings();
+  const countrySelect = document.getElementById('countrySelect');
+  const selectedOption = countrySelect.selectedOptions[0];
+  return {
+    mode: 'free', roundLimit: null,
+    timeLimitSeconds: timerEnabled ? seconds : 0,
+    allowMovement: document.getElementById('movementAllowed').checked,
+    countryId: countrySelect.value,
+    countryCode: selectedOption?.dataset.code || null,
+    countryName: selectedOption?.textContent || '世界全体'
+  };
+}
+
+async function startSelectedGame() {
+  if (!mapsLoaded || !map || !pano) return;
+  const startBtn = document.getElementById('startGameBtn');
+  const errorEl = document.getElementById('menuError');
+  startBtn.disabled = true;
+  startBtn.textContent = 'ルートを準備中…';
+  errorEl.textContent = '';
+  try {
+    gameConfig = selectedMenuMode === 'challenge' ? {
+      mode: 'challenge', roundLimit: 5, timeLimitSeconds: 180,
+      allowMovement: true, countryId: 'world', countryCode: null, countryName: '世界全体'
+    } : readFreePlayConfig();
+    currentCountryGeometry = gameConfig.countryId === 'world'
+      ? null : await loadCountryGeometry(gameConfig.countryId);
+    currentMapSizeKm = currentCountryGeometry?.mapSizeKm || WORLD_MAP_SIZE_KM;
+    roundHistory = [];
+    roundNumber = 1;
+    gameActive = true;
+    document.getElementById('resultInfo').classList.remove('show');
+    document.getElementById('subcontrols').classList.remove('hidden');
+    document.getElementById('totalMetric').classList.add('hidden');
+    document.getElementById('mainMenu').classList.add('hidden');
+    document.getElementById('summaryScreen').classList.add('hidden');
+    document.getElementById('menuBtn').classList.remove('hidden');
+    document.getElementById('gameStatus').classList.remove('hidden');
+    document.getElementById('sourceToggleWrap').classList.toggle('hidden', gameConfig.mode === 'challenge');
+    document.getElementById('skipBtn').classList.toggle('hidden', gameConfig.mode === 'challenge');
+    document.getElementById('roundIndicator').classList.toggle('hidden', gameConfig.mode !== 'challenge');
+    document.getElementById('panBtn').classList.toggle('hidden', !gameConfig.allowMovement);
+    beginRoundSearch();
+  } catch (error) {
+    errorEl.textContent = error.message || 'ゲームを開始できませんでした。';
+    startBtn.disabled = false;
+    startBtn.textContent = 'この設定で開始';
+  }
+}
+
+function openMainMenu() {
+  gameActive = false;
+  stopRoundTimer();
+  hideStatus();
+  document.getElementById('mainMenu').classList.remove('hidden');
+  document.getElementById('summaryScreen').classList.add('hidden');
+  document.getElementById('menuBtn').classList.add('hidden');
+  document.getElementById('gameStatus').classList.add('hidden');
+  document.getElementById('sourceToggleWrap').classList.remove('hidden');
+  document.getElementById('resultInfo').classList.remove('show');
+  document.getElementById('subcontrols').classList.remove('hidden');
+  const startBtn = document.getElementById('startGameBtn');
+  startBtn.disabled = !mapsLoaded;
+  startBtn.textContent = mapsLoaded ? 'この設定で開始' : '地図を準備中…';
+}
+
+populateCountrySelect();
+restoreFreePlaySettings();
+document.querySelectorAll('[data-game-mode]').forEach(btn => {
+  btn.addEventListener('click', () => selectMenuMode(btn.dataset.gameMode));
+});
+document.getElementById('timerEnabled').addEventListener('change', () => {
+  syncTimeLimitControl();
+  saveFreePlaySettings();
+});
+document.getElementById('timeLimitInput').addEventListener('change', saveFreePlaySettings);
+document.getElementById('movementAllowed').addEventListener('change', saveFreePlaySettings);
+document.getElementById('countrySelect').addEventListener('change', saveFreePlaySettings);
+document.getElementById('startGameBtn').addEventListener('click', startSelectedGame);
+document.getElementById('menuBtn').addEventListener('click', openMainMenu);
+document.getElementById('summaryMenuBtn').addEventListener('click', openMainMenu);
+document.getElementById('retryChallengeBtn').addEventListener('click', () => {
+  selectMenuMode('challenge');
+  startSelectedGame();
+});
+
 /* ---- ゲームロジック ---- */
 function showStatus(msg, spinning = true) {
   document.getElementById('statusMsg').textContent = msg;
@@ -778,27 +1331,49 @@ function haversine(a, b) {
   return 2 * R * Math.asin(Math.sqrt(h));
 }
 
-function randomLatLng() {
-  return { lat: Math.random() * 130 - 60, lng: Math.random() * 360 - 180 };
+function randomLatLng(rng = Math.random) {
+  return currentCountryGeometry
+    ? randomCountryPoint(currentCountryGeometry, rng)
+    : { lat: rng() * 130 - 60, lng: rng() * 360 - 180 };
+}
+
+function beginRoundSearch() {
+  stopRoundTimer();
+  roundRandom = Math.random;
+  findRandomPano();
 }
 
 function findRandomPano(attempt = 0) {
-  const MAX = 120;
+  if (!gameActive) return;
+  const MAX = currentCountryGeometry ? 240 : 120;
   if (attempt >= MAX) {
-    showStatus('ストリートビューが見つかりませんでした。もう一度お試しください。', false);
+    const area = gameConfig?.countryName || '指定エリア';
+    showStatus(`${area}でストリートビューが見つかりませんでした。メニューから別の設定をお試しください。`, false);
     return;
   }
-  if (attempt % 10 === 0) showStatus(`ランダムな地点を探索中… (${attempt})`);
-  const loc = randomLatLng();
+  if (attempt % 10 === 0) showStatus(`${gameConfig?.countryName || '世界'}の地点を探索中… (${attempt})`);
+  let loc;
+  try { loc = randomLatLng(roundRandom); }
+  catch (error) {
+    showStatus(error.message, false);
+    return;
+  }
   svService.getPanorama({
     location: loc, radius: 50000,
-    source: svSource === 'official'
+    source: (gameConfig?.mode === 'challenge' || svSource === 'official')
       ? google.maps.StreetViewSource.GOOGLE
       : google.maps.StreetViewSource.DEFAULT,
     preference: google.maps.StreetViewPreference.NEAREST
   }, (data, status) => {
-    if (status === google.maps.StreetViewStatus.OK) startRound(data);
-    else findRandomPano(attempt + 1);
+    if (!gameActive) return;
+    if (status === google.maps.StreetViewStatus.OK) {
+      const found = { lat: data.location.latLng.lat(), lng: data.location.latLng.lng() };
+      if (!currentCountryGeometry || pointInCountry(found, currentCountryGeometry)) {
+        startRound(data);
+        return;
+      }
+    }
+    findRandomPano(attempt + 1);
   });
 }
 
@@ -810,6 +1385,10 @@ function startRound(data) {
   if (map._overlays) map._overlays.forEach(o => o.setMap(null));
   truePos = { lat: data.location.latLng.lat(), lng: data.location.latLng.lng() };
   pano.setPano(data.location.pano);
+  pano.setOptions({
+    linksControl: gameConfig.allowMovement,
+    clickToGo: gameConfig.allowMovement
+  });
   pano.setPov({ heading: Math.random() * 360, pitch: 0 });
   pano.setZoom(0);
   panoStart = { pano: data.location.pano, heading: pano.getPov().heading };
@@ -822,7 +1401,60 @@ function startRound(data) {
   gb.disabled = true;
   gb.dataset.mode = '';
   gb.classList.add('waiting');
+  updateGameStatus();
+  startRoundTimer();
   hideStatus();
+}
+
+function updateGameStatus() {
+  if (gameConfig?.mode === 'challenge') {
+    document.getElementById('roundIndicator').textContent = `ラウンド ${roundNumber} / ${gameConfig.roundLimit}`;
+  }
+}
+
+function formatClock(seconds) {
+  return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
+}
+
+function stopRoundTimer() {
+  if (roundTimerId) clearInterval(roundTimerId);
+  roundTimerId = null;
+}
+
+function flashCountdownEdge(second) {
+  if (lastCountdownFlashSecond === second) return;
+  lastCountdownFlashSecond = second;
+  const flashEl = document.getElementById('countdownFlash');
+  flashEl.classList.remove('flash');
+  void flashEl.offsetWidth;
+  flashEl.classList.add('flash');
+}
+
+function startRoundTimer() {
+  stopRoundTimer();
+  const timerEl = document.getElementById('timerVal');
+  const flashEl = document.getElementById('countdownFlash');
+  lastCountdownFlashSecond = null;
+  flashEl.classList.remove('flash');
+  if (!gameConfig?.timeLimitSeconds) {
+    timerEl.textContent = '∞';
+    timerEl.classList.remove('warning', 'danger');
+    return;
+  }
+  roundDeadline = Date.now() + gameConfig.timeLimitSeconds * 1000;
+  const tick = () => {
+    const remaining = Math.max(0, Math.ceil((roundDeadline - Date.now()) / 1000));
+    timerEl.textContent = formatClock(remaining);
+    timerEl.classList.toggle('warning', remaining >= 10 && remaining < 30);
+    timerEl.classList.toggle('danger', remaining > 0 && remaining < 10);
+    if ([10, 5, 3, 2, 1].includes(remaining)) flashCountdownEdge(remaining);
+    if (remaining === 0) {
+      stopRoundTimer();
+      submitGuess(true);
+    }
+  };
+  tick();
+  roundTimerId = setInterval(tick, 250);
 }
 
 function onMapClick(e) {
@@ -858,7 +1490,7 @@ function verdictText(km) {
 }
 
 function calculateScore(km) {
-  return Math.round(5000 * Math.exp(-10 * km / WORLD_MAP_SIZE_KM));
+  return Math.round(5000 * Math.exp(-10 * km / currentMapSizeKm));
 }
 
 function getPlonkGuideUrl(countryCode) {
@@ -895,104 +1527,107 @@ async function updatePlonkGuideLink(pos, requestId) {
   }
 }
 
-function submitGuess() {
-  if (!guessPos || !truePos) return;
-  const km = haversine(guessPos, truePos);
-  const score = calculateScore(km);
+function submitGuess(timedOut = false) {
+  if (!gameActive || isReviewing || !truePos || (!timedOut && !guessPos)) return;
+  stopRoundTimer();
+  const finalGuess = guessPos ? { ...guessPos } : null;
+  const km = finalGuess ? haversine(finalGuess, truePos) : null;
+  const score = km === null ? 0 : calculateScore(km);
+  const totalScore = roundHistory.reduce((sum, round) => sum + round.score, 0) + score;
 
-  // 今ラウンドを履歴に追加
-  roundHistory.push({ truePos: {...truePos}, guessPos: {...guessPos}, km, score });
+  roundHistory.push({ truePos: { ...truePos }, guessPos: finalGuess, km, score, timedOut });
   isReviewing = true;
-  if (guessMarker) { guessMarker.setMap(null); }
+  if (guessMarker) { guessMarker.setMap(null); guessMarker = null; }
 
-  document.getElementById('distVal').textContent =
-    km < 1 ? `${Math.round(km*1000)} m` : `${km.toLocaleString('ja-JP',{maximumFractionDigits:0})} km`;
+  document.getElementById('distVal').textContent = km === null
+    ? '時間切れ'
+    : km < 1 ? `${Math.round(km * 1000)} m` : `${km.toLocaleString('ja-JP', { maximumFractionDigits: 0 })} km`;
   document.getElementById('scoreVal').textContent = `${score.toLocaleString('ja-JP')} 点`;
-  document.getElementById('verdict').textContent = verdictText(km);
+  document.getElementById('verdict').textContent = km === null ? 'ピンが置かれなかったため、このラウンドは0点です。' : verdictText(km);
+  document.getElementById('totalMetric').classList.toggle('hidden', gameConfig.mode !== 'challenge');
+  document.getElementById('totalScoreVal').textContent = `${totalScore.toLocaleString('ja-JP')} 点`;
   document.getElementById('resultInfo').classList.add('show');
   document.getElementById('subcontrols').classList.add('hidden');
-  // 正解地点のGoogleマップURL
   document.getElementById('mapLinkBtn').href =
     `https://www.google.com/maps/search/?api=1&query=${truePos.lat},${truePos.lng}`;
   resetPlonkGuideLink();
-  updatePlonkGuideLink({...truePos}, ++plonkGuideRequestId);
-  // 確定するボタン → もう一回遊ぶ に差し替え
+  updatePlonkGuideLink({ ...truePos }, ++plonkGuideRequestId);
+
   const gBtn = document.getElementById('guessBtn');
-  gBtn.textContent = 'もう一回遊ぶ';
+  const finalRound = gameConfig.roundLimit && roundNumber >= gameConfig.roundLimit;
+  gBtn.textContent = gameConfig.mode === 'challenge'
+    ? (finalRound ? '最終結果を見る' : '次のラウンド')
+    : 'もう一回遊ぶ';
   gBtn.disabled = false;
-  gBtn.dataset.mode = 'again';
-  // ヒント非表示
-  // マップ展開: PC / スマホで適切な展開関数を使い分け
-  if (isMobile()) {
-    setMapExpanded(true);
-  } else {
-    setPCMapExpanded(true);
-  }
+  gBtn.dataset.mode = finalRound ? 'summary' : 'again';
 
-  setTimeout(() => {
-    // 既存のオーバーレイをクリア
-    if (map._overlays) map._overlays.forEach(o => o.setMap(null));
-    map._overlays = [];
+  if (isMobile()) setMapExpanded(true);
+  else setPCMapExpanded(true);
 
-const total = roundHistory.length;
+  setTimeout(() => drawRoundResult(km), 60);
+}
 
-    // 過去ラウンドを先に描画（薄く小さく）
-    roundHistory.slice(0, -1).forEach((r, i) => {
-      const alpha = 0.28 + 0.1 * (i / Math.max(total - 2, 1));
-      const scale = 7;
-      const rNum = i + 1;
-      const mTrue = new google.maps.Marker({
-        position: r.truePos, map: map,
-        label: { text: '正', color: 'rgba(255,255,255,0.7)', fontWeight: '700', fontSize: '10px' },
-        icon: { path: google.maps.SymbolPath.CIRCLE, scale, fillColor: '#3f7d52', fillOpacity: alpha, strokeColor: '#fff', strokeWeight: 1.5, strokeOpacity: alpha + 0.1 },
-        zIndex: 1
-      });
-      const mGuess = new google.maps.Marker({
-        position: r.guessPos, map: map,
-        label: { text: '推', color: 'rgba(255,255,255,0.7)', fontWeight: '700', fontSize: '10px' },
-        icon: { path: google.maps.SymbolPath.CIRCLE, scale, fillColor: '#c8553d', fillOpacity: alpha, strokeColor: '#fff', strokeWeight: 1.5, strokeOpacity: alpha + 0.1 },
-        zIndex: 1
-      });
-      const line = new google.maps.Polyline({
-        path: [r.guessPos, r.truePos], map: map,
-        strokeColor: '#888', strokeOpacity: alpha * 0.8, strokeWeight: 1.5,
-        zIndex: 1
-      });
-      map._overlays.push(mTrue, mGuess, line);
+function drawRoundResult(km) {
+  if (map._overlays) map._overlays.forEach(o => o.setMap(null));
+  map._overlays = [];
+  const total = roundHistory.length;
+
+  roundHistory.slice(0, -1).forEach((round, i) => {
+    const alpha = 0.28 + 0.1 * (i / Math.max(total - 2, 1));
+    const marker = new google.maps.Marker({
+      position: round.truePos, map,
+      label: { text: '正', color: 'rgba(255,255,255,.7)', fontWeight: '700', fontSize: '10px' },
+      icon: { path: google.maps.SymbolPath.CIRCLE, scale: 7, fillColor: '#3f7d52', fillOpacity: alpha, strokeColor: '#fff', strokeWeight: 1.5, strokeOpacity: alpha + .1 }
     });
-
-    // 今ラウンドを前面に描画（大きく・鮮明）
-    const cur = roundHistory[total - 1];
-    const curNum = total;
-    const mCurTrue = new google.maps.Marker({
-      position: cur.truePos, map: map,
-      label: { text: '正', color: '#fff', fontWeight: '800', fontSize: '12px' },
-      icon: { path: google.maps.SymbolPath.CIRCLE, scale: 13, fillColor: '#3f7d52', fillOpacity: 1, strokeColor: '#fff', strokeWeight: 2.5 },
-      zIndex: 10
+    map._overlays.push(marker);
+    if (!round.guessPos) return;
+    const guess = new google.maps.Marker({
+      position: round.guessPos, map,
+      label: { text: '推', color: 'rgba(255,255,255,.7)', fontWeight: '700', fontSize: '10px' },
+      icon: { path: google.maps.SymbolPath.CIRCLE, scale: 7, fillColor: '#c8553d', fillOpacity: alpha, strokeColor: '#fff', strokeWeight: 1.5, strokeOpacity: alpha + .1 }
     });
-    const mCurGuess = new google.maps.Marker({
-      position: cur.guessPos, map: map,
+    const line = new google.maps.Polyline({
+      path: [round.guessPos, round.truePos], map,
+      strokeColor: '#888', strokeOpacity: alpha * .8, strokeWeight: 1.5
+    });
+    map._overlays.push(guess, line);
+  });
+
+  const current = roundHistory.at(-1);
+  const answerMarker = new google.maps.Marker({
+    position: current.truePos, map,
+    label: { text: '正', color: '#fff', fontWeight: '800', fontSize: '12px' },
+    icon: { path: google.maps.SymbolPath.CIRCLE, scale: 13, fillColor: '#3f7d52', fillOpacity: 1, strokeColor: '#fff', strokeWeight: 2.5 },
+    zIndex: 10
+  });
+  map._overlays.push(answerMarker);
+  if (current.guessPos) {
+    const guessMarkerResult = new google.maps.Marker({
+      position: current.guessPos, map,
       label: { text: '推', color: '#fff', fontWeight: '800', fontSize: '12px' },
       icon: { path: google.maps.SymbolPath.CIRCLE, scale: 13, fillColor: '#c8553d', fillOpacity: 1, strokeColor: '#fff', strokeWeight: 2.5 },
       zIndex: 10
     });
-    const curLine = new google.maps.Polyline({
-      path: [cur.guessPos, cur.truePos], map: map,
-      strokeColor: '#14110d', strokeOpacity: 0.75, strokeWeight: 2.5,
+    const line = new google.maps.Polyline({
+      path: [current.guessPos, current.truePos], map,
+      strokeColor: '#14110d', strokeOpacity: .75, strokeWeight: 2.5,
       icons: [{ icon: { path: 'M 0,-1 0,1', strokeOpacity: 1, scale: 3 }, offset: '0', repeat: '12px' }],
       zIndex: 10
     });
-    map._overlays.push(mCurTrue, mCurGuess, curLine);
+    map._overlays.push(guessMarkerResult, line);
+  }
 
-    // fitBounds は今ラウンドのみ
-    const bounds = new google.maps.LatLngBounds();
-    bounds.extend(cur.truePos);
-    bounds.extend(cur.guessPos);
-
-    google.maps.event.trigger(map, 'resize');
+  const bounds = new google.maps.LatLngBounds();
+  bounds.extend(current.truePos);
+  if (current.guessPos) bounds.extend(current.guessPos);
+  google.maps.event.trigger(map, 'resize');
+  if (current.guessPos) {
     map.fitBounds(bounds, 40);
     if (km < 5) map.setZoom(10);
-  }, 60);
+  } else {
+    map.setCenter(current.truePos);
+    map.setZoom(5);
+  }
 }
 
 
@@ -1052,6 +1687,11 @@ function isMobile() { return window.innerWidth <= 560; }
 function refitResultBounds() {
   if (!isReviewing || !map || roundHistory.length === 0) return;
   const cur = roundHistory[roundHistory.length - 1];
+  if (!cur.guessPos) {
+    map.setCenter(cur.truePos);
+    map.setZoom(5);
+    return;
+  }
   const bounds = new google.maps.LatLngBounds();
   bounds.extend(cur.truePos);
   bounds.extend(cur.guessPos);
@@ -1267,7 +1907,21 @@ function playAgain() {
   gBtn.textContent = '確定する';
   gBtn.disabled = true;
   gBtn.dataset.mode = '';
-  findRandomPano();
+  if (gameConfig.mode === 'challenge') roundNumber += 1;
+  beginRoundSearch();
+}
+
+function showChallengeSummary() {
+  stopRoundTimer();
+  const total = roundHistory.reduce((sum, round) => sum + round.score, 0);
+  document.getElementById('summaryTotal').textContent = `${total.toLocaleString('ja-JP')} / 25,000`;
+  document.getElementById('summaryRounds').innerHTML = roundHistory.map((round, index) => {
+    const distance = round.km === null
+      ? '時間切れ'
+      : round.km < 1 ? `${Math.round(round.km * 1000)} m` : `${round.km.toLocaleString('ja-JP', { maximumFractionDigits: 0 })} km`;
+    return `<div class="summary-round"><span>ROUND ${index + 1} · ${distance}</span><b>${round.score.toLocaleString('ja-JP')} 点</b></div>`;
+  }).join('');
+  document.getElementById('summaryScreen').classList.remove('hidden');
 }
 
 /* ---- Maps 初期化 ---- */
@@ -1300,7 +1954,8 @@ window.initGame = function() {
 
   document.getElementById('guessBtn').addEventListener('click', () => {
     const btn = document.getElementById('guessBtn');
-    if (btn.dataset.mode === 'again') playAgain();
+    if (btn.dataset.mode === 'summary') showChallengeSummary();
+    else if (btn.dataset.mode === 'again') playAgain();
     else submitGuess();
   });
   document.getElementById('panBtn').addEventListener('click', () => {
@@ -1314,17 +1969,19 @@ window.initGame = function() {
 
   // 別の地点へボタン
   document.getElementById('skipBtn').addEventListener('click', () => {
+    if (!gameActive || gameConfig.mode === 'challenge') return;
+    stopRoundTimer();
     // 現ラウンドを破棄（履歴には追加しない）してリスタート
     if (guessMarker) { guessMarker.setMap(null); guessMarker = null; }
     guessPos = null;
     isReviewing = false;
     document.getElementById('resultInfo').classList.remove('show');
-  document.getElementById('subcontrols').classList.remove('hidden');
+    document.getElementById('subcontrols').classList.remove('hidden');
     document.getElementById('guessBtn').textContent = '確定する';
     document.getElementById('guessBtn').disabled = true;
     document.getElementById('guessBtn').dataset.mode = '';
-      document.getElementById('subcontrols').classList.remove('hidden');
-    findRandomPano();
+    document.getElementById('subcontrols').classList.remove('hidden');
+    beginRoundSearch();
   });
 
   // ソーストグルボタン
@@ -1346,8 +2003,10 @@ window.initGame = function() {
   // SVズームコントロールをsidebarと被らない位置に移動
   pano.addListener('pano_changed', repositionSVZoom);
   setTimeout(repositionSVZoom, 800);
-
-  findRandomPano();
+  hideStatus();
+  const startBtn = document.getElementById('startGameBtn');
+  startBtn.disabled = false;
+  startBtn.textContent = 'この設定で開始';
 };
 
 function repositionSVZoom() {
@@ -1369,6 +2028,8 @@ function repositionSVZoom() {
 }
 
 window.gmapsError = function() {
+  document.getElementById('menuError').textContent = '地図を読み込めませんでした。APIキーと通信状態を確認してください。';
+  document.getElementById('startGameBtn').textContent = '地図を読み込めませんでした';
   showStatus('地図の読み込みに失敗しました。⚙️ からキーを確認してください。', false);
 };
 
