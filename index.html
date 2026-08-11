@@ -1264,7 +1264,7 @@ async function startSelectedGame() {
     document.getElementById('mainMenu').classList.add('hidden');
     document.getElementById('summaryScreen').classList.add('hidden');
     document.getElementById('menuBtn').classList.remove('hidden');
-    document.getElementById('gameStatus').classList.remove('hidden');
+    document.getElementById('gameStatus').classList.toggle('hidden', !gameConfig.timeLimitSeconds);
     document.getElementById('sourceToggleWrap').classList.toggle('hidden', gameConfig.mode === 'challenge');
     document.getElementById('skipBtn').classList.toggle('hidden', gameConfig.mode === 'challenge');
     document.getElementById('roundIndicator').classList.toggle('hidden', gameConfig.mode !== 'challenge');
@@ -1432,15 +1432,18 @@ function flashCountdownEdge(second) {
 
 function startRoundTimer() {
   stopRoundTimer();
+  const gameStatusEl = document.getElementById('gameStatus');
   const timerEl = document.getElementById('timerVal');
   const flashEl = document.getElementById('countdownFlash');
   lastCountdownFlashSecond = null;
   flashEl.classList.remove('flash');
   if (!gameConfig?.timeLimitSeconds) {
-    timerEl.textContent = '∞';
+    gameStatusEl.classList.add('hidden');
+    timerEl.textContent = '';
     timerEl.classList.remove('warning', 'danger');
     return;
   }
+  gameStatusEl.classList.remove('hidden');
   roundDeadline = Date.now() + gameConfig.timeLimitSeconds * 1000;
   const tick = () => {
     const remaining = Math.max(0, Math.ceil((roundDeadline - Date.now()) / 1000));
