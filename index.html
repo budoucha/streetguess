@@ -136,14 +136,18 @@
     outline: 3px solid #f2a38f; outline-offset: 3px;
   }
 
-  #gameStatus {
-    position: fixed; top: 68px; left: 50%; z-index: 36;
+  #topCenterHud {
+    position: fixed; top: 16px; left: 50%; z-index: 36;
     transform: translateX(-50%);
+    display: flex; flex-direction: column; align-items: center; gap: 10px;
+    pointer-events: none;
+  }
+  #gameStatus {
     display: flex; align-items: center;
     color: var(--paper); font: 800 19px/1 ui-monospace, Consolas, monospace;
     text-shadow: 0 1px 4px rgba(0,0,0,.8);
   }
-  #gameStatus span { min-width: 74px; padding: 8px 12px; text-align: center; border-radius: 4px; background: rgba(20,17,13,.78); }
+  .game-status-item { min-width: 74px; padding: 8px 12px; text-align: center; border-radius: 4px; background: rgba(20,17,13,.78); }
   #timerVal.warning { color: #ffd166; }
   #timerVal.danger { color: #ff665c; animation: timerPulse .55s ease-in-out infinite alternate; }
   @keyframes timerPulse { to { transform: scale(1.06); } }
@@ -444,8 +448,6 @@
 
   /* ---- コンパス ---- */
   #compass {
-    position: fixed; top: 16px; left: 50%; transform: translateX(-50%);
-    z-index: 35; pointer-events: none;
     display: flex; flex-direction: column; align-items: center; gap: 4px;
   }
   /* テープを囲むラッパー: 背景なし・overflow hidden でクリップ */
@@ -563,7 +565,7 @@
     #mapWrap.expanded { height: 400px !important; }
 
     /* HUD・コンパス・設定ボタン: SVエリア内に絶対配置のまま */
-    #hud, #compass, #settingsBtn, #menuBtn, #gameStatus, #sourceToggleWrap {
+    #hud, #topCenterHud, #settingsBtn, #menuBtn, #sourceToggleWrap {
       position: fixed !important; /* SVがrelativeになっても fixed は viewport基準 */
     }
 
@@ -578,7 +580,6 @@
     .option-row { align-items: flex-start; padding-block: 11px; }
     .option-control { margin-top: 2px; }
     #countrySelect { width: 150px; }
-    #gameStatus { top: 66px; left: 50%; right: auto; }
     .summary-board { margin-block: 8px; padding: 22px 18px; }
 
     #compassTrack { width: 200px; }
@@ -683,14 +684,19 @@
 
   <div id="pano"></div>
 
-  <!-- コンパス -->
-  <div id="compass">
-    <div id="compassTrack">
-      <div id="compassFade"></div>
-      <div id="compassTape"></div>
-      <div id="compassNeedle"></div>
+  <div id="topCenterHud">
+    <!-- コンパス -->
+    <div id="compass">
+      <div id="compassTrack">
+        <div id="compassFade"></div>
+        <div id="compassTape"></div>
+        <div id="compassNeedle"></div>
+      </div>
+      <div id="compassHeading">000°</div>
     </div>
-    <div id="compassHeading">000°</div>
+    <div id="gameStatus" class="hidden" aria-live="polite">
+      <span id="timerVal" class="game-status-item hidden"></span>
+    </div>
   </div>
 
   <div id="hud">
@@ -701,9 +707,6 @@
     </div>
   </div>
 
-  <div id="gameStatus" class="hidden" aria-live="polite">
-    <span id="timerVal"></span>
-  </div>
   <button id="settingsBtn" title="API キー設定">⚙️</button>
   <button id="menuBtn" class="hidden" title="メインメニュー">☰</button>
 
@@ -1264,7 +1267,7 @@ async function startSelectedGame() {
     document.getElementById('mainMenu').classList.add('hidden');
     document.getElementById('summaryScreen').classList.add('hidden');
     document.getElementById('menuBtn').classList.remove('hidden');
-    document.getElementById('gameStatus').classList.toggle('hidden', !gameConfig.timeLimitSeconds);
+    document.getElementById('gameStatus').classList.remove('hidden');
     document.getElementById('sourceToggleWrap').classList.toggle('hidden', gameConfig.mode === 'challenge');
     document.getElementById('skipBtn').classList.toggle('hidden', gameConfig.mode === 'challenge');
     document.getElementById('roundIndicator').classList.toggle('hidden', gameConfig.mode !== 'challenge');
@@ -1432,18 +1435,17 @@ function flashCountdownEdge(second) {
 
 function startRoundTimer() {
   stopRoundTimer();
-  const gameStatusEl = document.getElementById('gameStatus');
   const timerEl = document.getElementById('timerVal');
   const flashEl = document.getElementById('countdownFlash');
   lastCountdownFlashSecond = null;
   flashEl.classList.remove('flash');
   if (!gameConfig?.timeLimitSeconds) {
-    gameStatusEl.classList.add('hidden');
+    timerEl.classList.add('hidden');
     timerEl.textContent = '';
     timerEl.classList.remove('warning', 'danger');
     return;
   }
-  gameStatusEl.classList.remove('hidden');
+  timerEl.classList.remove('hidden');
   roundDeadline = Date.now() + gameConfig.timeLimitSeconds * 1000;
   const tick = () => {
     const remaining = Math.max(0, Math.ceil((roundDeadline - Date.now()) / 1000));
