@@ -1628,7 +1628,6 @@ function drawRoundResult(km) {
   google.maps.event.trigger(map, 'resize');
   if (current.guessPos) {
     map.fitBounds(bounds, 40);
-    if (km < 5) map.setZoom(10);
   } else {
     map.setCenter(current.truePos);
     map.setZoom(5);
@@ -1701,7 +1700,6 @@ function refitResultBounds() {
   bounds.extend(cur.truePos);
   bounds.extend(cur.guessPos);
   map.fitBounds(bounds, 40);
-  if (cur.km < 5) map.setZoom(10);
 }
 
 // 地図の縦方向に余白を出さない最小ズームを計算してminZoomを更新
