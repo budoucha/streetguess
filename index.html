@@ -1127,6 +1127,7 @@ function selectMenuMode(mode) {
   document.getElementById('menuError').textContent = '';
 }
 
+// 出題エリアの境界・候補点生成を変更するときは docs/area-selection.md も更新する。
 function geometryPolygons(feature) {
   if (!feature?.geometry) return [];
   return feature.geometry.type === 'Polygon'
@@ -1346,6 +1347,7 @@ function beginRoundSearch() {
   findRandomPano();
 }
 
+// 探索回数・検索半径・返却地点の再検証を変更するときは docs/area-selection.md も更新する。
 function findRandomPano(attempt = 0) {
   if (!gameActive) return;
   const MAX = currentCountryGeometry ? 240 : 120;
