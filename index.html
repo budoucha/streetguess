@@ -2018,10 +2018,20 @@ function repositionSVZoom() {
   const panoEl = document.getElementById('pano');
   const sidebarEl = document.getElementById('sidebar');
   if (!panoEl || !sidebarEl) return;
+  // スマホではsidebarがpanoの下に続く通常フローなので、
+  // コントロールを上へ逃がす必要がない。地図の展開でpanoの高さが
+  // 変わっても、Google Mapsの「利用規約」を画面内に残す。
+  if (isMobile()) return;
   const sidebarBottom = Math.ceil(sidebarEl.getBoundingClientRect().height) + 24;
-  // gmnoprint のうち右側(right!=0)にあるものを対象にする
+  // 操作ボタンを持つ右下コントロールだけを対象にする。
+  // .gm-style-cc には「利用規約」などの法的表示が含まれるため、
+  // これまでの .gmnoprint 一括処理で同じ bottom を設定してはいけない。
   const controls = panoEl.querySelectorAll('.gmnoprint');
   controls.forEach(el => {
+    if (el.closest('.gm-style-cc')) return;
+    const isInteractiveControl = el.matches('button, [role="button"]') ||
+      el.querySelector('button, [role="button"]');
+    if (!isInteractiveControl) return;
     const style = window.getComputedStyle(el);
     // 右下に配置されているコントロール（right が設定されているもの）
     if (style.right !== 'auto' && parseInt(style.right) < 200) {
