@@ -1187,6 +1187,31 @@ function countryMapSizeKm(polygons) {
   ));
 }
 
+function countryMapBounds(country) {
+  const coords = country.polygons.flatMap(polygon => polygon[0] || []);
+  if (!coords.length) return null;
+  const latBounds = coords.reduce((bounds, point) => ({
+    min: Math.min(bounds.min, point[1]), max: Math.max(bounds.max, point[1])
+  }), { min: 90, max: -90 });
+  const longitudes = coords.map(p => (p[0] + 360) % 360).sort((a, b) => a - b);
+  let largestGap = -1;
+  let arcStart = longitudes[0];
+  for (let i = 0; i < longitudes.length; i++) {
+    const current = longitudes[i];
+    const next = i === longitudes.length - 1 ? longitudes[0] + 360 : longitudes[i + 1];
+    if (next - current > largestGap) {
+      largestGap = next - current;
+      arcStart = next % 360;
+    }
+  }
+  const lngSpan = 360 - largestGap;
+  const normalizeLng = lng => ((lng + 180) % 360 + 360) % 360 - 180;
+  return new google.maps.LatLngBounds(
+    { lat: latBounds.min, lng: normalizeLng(arcStart) },
+    { lat: latBounds.max, lng: normalizeLng(arcStart + lngSpan) }
+  );
+}
+
 async function loadCountryGeometry(countryId) {
   if (!countryAtlasPromise) {
     countryAtlasPromise = fetch(COUNTRY_ATLAS_URL).then(res => {
@@ -1399,8 +1424,7 @@ function startRound(data) {
   panoStart = { pano: data.location.pano, heading: pano.getPov().heading };
   if (guessMarker) { guessMarker.setMap(null); guessMarker = null; }
   guessPos = null;
-  map.setCenter({ lat: 20, lng: 0 });
-  map.setZoom(1);
+  resetRoundMapViewport();
   const gb = document.getElementById('guessBtn');
   gb.textContent = '地図をタップしてピンを置く';
   gb.disabled = true;
@@ -1409,6 +1433,20 @@ function startRound(data) {
   updateGameStatus();
   startRoundTimer();
   hideStatus();
+}
+
+function resetRoundMapViewport() {
+  if (!map) return;
+  google.maps.event.trigger(map, 'resize');
+  if (currentCountryGeometry) {
+    const bounds = countryMapBounds(currentCountryGeometry);
+    if (bounds) {
+      map.fitBounds(bounds, 20);
+      return;
+    }
+  }
+  map.setCenter({ lat: 20, lng: 0 });
+  map.setZoom(1);
 }
 
 function updateGameStatus() {
