@@ -112,7 +112,7 @@
     opacity: .68;
   }
   #timeLimitControl.disabled small { color: #81796f; }
-  #countrySelect { width: min(220px, 36vw); }
+  #regionSelect { width: min(220px, 36vw); }
   .toggle-input { width: 18px; height: 18px; accent-color: var(--accent); }
   .challenge-spec {
     margin-top: 18px; padding: 18px;
@@ -579,7 +579,7 @@
     .menu-options { padding: 18px; }
     .option-row { align-items: flex-start; padding-block: 11px; }
     .option-control { margin-top: 2px; }
-    #countrySelect { width: 150px; }
+    #regionSelect { width: 150px; }
     .summary-board { margin-block: 8px; padding: 22px 18px; }
 
     #compassTrack { width: 200px; }
@@ -646,10 +646,10 @@
               <span class="option-control"><input class="toggle-input" id="movementAllowed" type="checkbox" checked></span>
             </label>
             <label class="option-row">
-              <span class="option-copy"><strong>出題エリア</strong><small>公式画像の道路カバレッジがある国</small></span>
-              <span class="option-control"><select id="countrySelect" aria-label="出題する国"></select></span>
+              <span class="option-copy"><strong>出題エリア</strong><small>練習したい地域を選択</small></span>
+              <span class="option-control"><select id="regionSelect" aria-label="出題する地域"></select></span>
             </label>
-            <p class="menu-note">国境ポリゴン内で候補地点を作り、実際のStreet View地点も国境内にあることを確認します。国を選ぶと、その国を囲む範囲の対角線が得点計算のサイズになります。国境データ: Natural Earth / world-atlas。</p>
+            <p class="menu-note">地域の境界内で候補地点を作り、見つかったStreet View地点も境界内か確認します。地域を選ぶと、その範囲の対角線が得点計算のサイズになります。境界データ: Natural Earth / world-atlas。</p>
           </div>
           <div id="challengeOptions" class="hidden">
             <div class="option-title">チャレンジルール</div>
@@ -962,34 +962,96 @@ let collapsedMapPointer = null;
 let suppressNextMapClick = false;
 // 世界マップを覆う正方形の対角線（km）。距離と単位をそろえて得点を計算する。
 const WORLD_MAP_SIZE_KM = 14916.862;
-const COUNTRY_ATLAS_URL = 'https://cdn.jsdelivr.net/npm/world-atlas@2.0.2/countries-50m.json';
-const COVERED_COUNTRIES = Object.freeze([
-  ['008','al','アルバニア'], ['020','ad','アンドラ'], ['032','ar','アルゼンチン'],
-  ['036','au','オーストラリア'], ['040','at','オーストリア'], ['050','bd','バングラデシュ'],
-  ['056','be','ベルギー'], ['068','bo','ボリビア'], ['072','bw','ボツワナ'],
-  ['076','br','ブラジル'], ['100','bg','ブルガリア'], ['116','kh','カンボジア'],
-  ['124','ca','カナダ'], ['152','cl','チリ'], ['170','co','コロンビア'],
-  ['191','hr','クロアチア'], ['196','cy','キプロス'], ['203','cz','チェコ'],
-  ['208','dk','デンマーク'], ['218','ec','エクアドル'], ['233','ee','エストニア'],
-  ['748','sz','エスワティニ'], ['246','fi','フィンランド'], ['250','fr','フランス'],
-  ['276','de','ドイツ'], ['288','gh','ガーナ'], ['300','gr','ギリシャ'],
-  ['320','gt','グアテマラ'], ['348','hu','ハンガリー'], ['352','is','アイスランド'],
-  ['360','id','インドネシア'], ['372','ie','アイルランド'], ['376','il','イスラエル'],
-  ['380','it','イタリア'], ['392','jp','日本'], ['400','jo','ヨルダン'],
-  ['404','ke','ケニア'], ['417','kg','キルギス'], ['428','lv','ラトビア'],
-  ['426','ls','レソト'], ['440','lt','リトアニア'], ['442','lu','ルクセンブルク'],
-  ['458','my','マレーシア'], ['470','mt','マルタ'], ['484','mx','メキシコ'],
-  ['496','mn','モンゴル'], ['499','me','モンテネグロ'], ['528','nl','オランダ'],
-  ['554','nz','ニュージーランド'], ['566','ng','ナイジェリア'], ['807','mk','北マケドニア'],
-  ['578','no','ノルウェー'], ['604','pe','ペルー'], ['608','ph','フィリピン'],
-  ['616','pl','ポーランド'], ['620','pt','ポルトガル'], ['634','qa','カタール'],
-  ['642','ro','ルーマニア'], ['646','rw','ルワンダ'], ['686','sn','セネガル'],
-  ['688','rs','セルビア'], ['702','sg','シンガポール'], ['703','sk','スロバキア'],
-  ['705','si','スロベニア'], ['710','za','南アフリカ'], ['410','kr','韓国'],
-  ['724','es','スペイン'], ['144','lk','スリランカ'], ['752','se','スウェーデン'],
-  ['756','ch','スイス'], ['158','tw','台湾'], ['764','th','タイ'],
-  ['792','tr','トルコ'], ['800','ug','ウガンダ'], ['804','ua','ウクライナ'],
-  ['826','gb','イギリス'], ['840','us','アメリカ合衆国'], ['858','uy','ウルグアイ']
+const REGION_ATLAS_URL = 'https://cdn.jsdelivr.net/npm/world-atlas@2.0.2/countries-50m.json';
+// 練習対象の手動リスト。撮影済み範囲を固定するとGoogle側の追加地点を除外してしまう。
+const PLAY_REGIONS = Object.freeze([
+  { id: '008', name: 'アルバニア', boundary: { type: 'atlas', featureId: '008' } },
+  { id: '020', name: 'アンドラ', boundary: { type: 'atlas', featureId: '020' } },
+  { id: '032', name: 'アルゼンチン', boundary: { type: 'atlas', featureId: '032' } },
+  { id: '036', name: 'オーストラリア', boundary: { type: 'atlas', featureId: '036' } },
+  { id: '040', name: 'オーストリア', boundary: { type: 'atlas', featureId: '040' } },
+  { id: '050', name: 'バングラデシュ', boundary: { type: 'atlas', featureId: '050' } },
+  { id: '056', name: 'ベルギー', boundary: { type: 'atlas', featureId: '056' } },
+  { id: '068', name: 'ボリビア', boundary: { type: 'atlas', featureId: '068' } },
+  { id: '072', name: 'ボツワナ', boundary: { type: 'atlas', featureId: '072' } },
+  { id: '076', name: 'ブラジル', boundary: { type: 'atlas', featureId: '076' } },
+  { id: '100', name: 'ブルガリア', boundary: { type: 'atlas', featureId: '100' } },
+  { id: '116', name: 'カンボジア', boundary: { type: 'atlas', featureId: '116' } },
+  { id: '124', name: 'カナダ', boundary: { type: 'atlas', featureId: '124' } },
+  { id: '152', name: 'チリ', boundary: { type: 'atlas', featureId: '152' } },
+  { id: '170', name: 'コロンビア', boundary: { type: 'atlas', featureId: '170' } },
+  { id: '191', name: 'クロアチア', boundary: { type: 'atlas', featureId: '191' } },
+  { id: '196', name: 'キプロス', boundary: { type: 'atlas', featureId: '196' } },
+  { id: '203', name: 'チェコ', boundary: { type: 'atlas', featureId: '203' } },
+  { id: '208', name: 'デンマーク', boundary: { type: 'atlas', featureId: '208' } },
+  { id: '218', name: 'エクアドル', boundary: { type: 'atlas', featureId: '218' } },
+  { id: '233', name: 'エストニア', boundary: { type: 'atlas', featureId: '233' } },
+  { id: '748', name: 'エスワティニ', boundary: { type: 'atlas', featureId: '748' } },
+  { id: '246', name: 'フィンランド', boundary: { type: 'atlas', featureId: '246' } },
+  { id: '250', name: 'フランス', boundary: { type: 'atlas', featureId: '250' } },
+  { id: '276', name: 'ドイツ', boundary: { type: 'atlas', featureId: '276' } },
+  { id: '288', name: 'ガーナ', boundary: { type: 'atlas', featureId: '288' } },
+  { id: '300', name: 'ギリシャ', boundary: { type: 'atlas', featureId: '300' } },
+  { id: '320', name: 'グアテマラ', boundary: { type: 'atlas', featureId: '320' } },
+  { id: '348', name: 'ハンガリー', boundary: { type: 'atlas', featureId: '348' } },
+  { id: '352', name: 'アイスランド', boundary: { type: 'atlas', featureId: '352' } },
+  { id: '360', name: 'インドネシア', boundary: { type: 'atlas', featureId: '360' } },
+  { id: '372', name: 'アイルランド', boundary: { type: 'atlas', featureId: '372' } },
+  { id: '376', name: 'イスラエル', boundary: { type: 'atlas', featureId: '376' } },
+  { id: '380', name: 'イタリア', boundary: { type: 'atlas', featureId: '380' } },
+  { id: '392', name: '日本', boundary: { type: 'atlas', featureId: '392' } },
+  { id: '400', name: 'ヨルダン', boundary: { type: 'atlas', featureId: '400' } },
+  { id: '404', name: 'ケニア', boundary: { type: 'atlas', featureId: '404' } },
+  { id: '417', name: 'キルギス', boundary: { type: 'atlas', featureId: '417' } },
+  { id: '428', name: 'ラトビア', boundary: { type: 'atlas', featureId: '428' } },
+  { id: '426', name: 'レソト', boundary: { type: 'atlas', featureId: '426' } },
+  { id: '440', name: 'リトアニア', boundary: { type: 'atlas', featureId: '440' } },
+  { id: '442', name: 'ルクセンブルク', boundary: { type: 'atlas', featureId: '442' } },
+  { id: '458', name: 'マレーシア', boundary: { type: 'atlas', featureId: '458' } },
+  { id: '470', name: 'マルタ', boundary: { type: 'atlas', featureId: '470' } },
+  { id: '484', name: 'メキシコ', boundary: { type: 'atlas', featureId: '484' } },
+  { id: '496', name: 'モンゴル', boundary: { type: 'atlas', featureId: '496' } },
+  { id: '499', name: 'モンテネグロ', boundary: { type: 'atlas', featureId: '499' } },
+  { id: '528', name: 'オランダ', boundary: { type: 'atlas', featureId: '528' } },
+  { id: '554', name: 'ニュージーランド', boundary: { type: 'atlas', featureId: '554' } },
+  { id: '566', name: 'ナイジェリア', boundary: { type: 'atlas', featureId: '566' } },
+  { id: '807', name: '北マケドニア', boundary: { type: 'atlas', featureId: '807' } },
+  { id: '578', name: 'ノルウェー', boundary: { type: 'atlas', featureId: '578' } },
+  { id: '604', name: 'ペルー', boundary: { type: 'atlas', featureId: '604' } },
+  { id: '608', name: 'フィリピン', boundary: { type: 'atlas', featureId: '608' } },
+  { id: '616', name: 'ポーランド', boundary: { type: 'atlas', featureId: '616' } },
+  { id: '620', name: 'ポルトガル', boundary: { type: 'atlas', featureId: '620' } },
+  { id: '634', name: 'カタール', boundary: { type: 'atlas', featureId: '634' } },
+  { id: '642', name: 'ルーマニア', boundary: { type: 'atlas', featureId: '642' } },
+  { id: '646', name: 'ルワンダ', boundary: { type: 'atlas', featureId: '646' } },
+  { id: '686', name: 'セネガル', boundary: { type: 'atlas', featureId: '686' } },
+  { id: '688', name: 'セルビア', boundary: { type: 'atlas', featureId: '688' } },
+  { id: '702', name: 'シンガポール', boundary: { type: 'atlas', featureId: '702' } },
+  { id: '703', name: 'スロバキア', boundary: { type: 'atlas', featureId: '703' } },
+  { id: '705', name: 'スロベニア', boundary: { type: 'atlas', featureId: '705' } },
+  { id: '710', name: '南アフリカ', boundary: { type: 'atlas', featureId: '710' } },
+  { id: '410', name: '韓国', boundary: { type: 'atlas', featureId: '410' } },
+  { id: '724', name: 'スペイン', boundary: { type: 'atlas', featureId: '724' } },
+  { id: '144', name: 'スリランカ', boundary: { type: 'atlas', featureId: '144' } },
+  { id: '752', name: 'スウェーデン', boundary: { type: 'atlas', featureId: '752' } },
+  { id: '756', name: 'スイス', boundary: { type: 'atlas', featureId: '756' } },
+  { id: '158', name: '台湾', boundary: { type: 'atlas', featureId: '158' } },
+  { id: '764', name: 'タイ', boundary: { type: 'atlas', featureId: '764' } },
+  { id: '792', name: 'トルコ', boundary: { type: 'atlas', featureId: '792' } },
+  { id: '800', name: 'ウガンダ', boundary: { type: 'atlas', featureId: '800' } },
+  { id: '804', name: 'ウクライナ', boundary: { type: 'atlas', featureId: '804' } },
+  { id: '826', name: 'イギリス', boundary: { type: 'atlas', featureId: '826' } },
+  { id: '840', name: 'アメリカ合衆国', boundary: { type: 'atlas', featureId: '840' } },
+  { id: '858', name: 'ウルグアイ', boundary: { type: 'atlas', featureId: '858' } },
+  { id: '643', name: 'ロシア', boundary: { type: 'atlas', featureId: '643' } },
+  { id: '398', name: 'カザフスタン', boundary: { type: 'atlas', featureId: '398' } },
+  { id: '304', name: 'グリーンランド', boundary: { type: 'atlas', featureId: '304' } },
+  { id: '356', name: 'インド', boundary: { type: 'atlas', featureId: '356' } },
+  { id: '788', name: 'チュニジア', boundary: { type: 'atlas', featureId: '788' } },
+  { id: '784', name: 'アラブ首長国連邦', boundary: { type: 'atlas', featureId: '784' } },
+  { id: '512', name: 'オマーン', boundary: { type: 'atlas', featureId: '512' } },
+  { id: '422', name: 'レバノン', boundary: { type: 'atlas', featureId: '422' } },
+  { id: '704', name: 'ベトナム', boundary: { type: 'atlas', featureId: '704' } },
 ]);
 
 let selectedMenuMode = 'free';
@@ -998,8 +1060,8 @@ let gameConfig = null;
 let roundNumber = 1;
 let roundRandom = Math.random;
 let currentMapSizeKm = WORLD_MAP_SIZE_KM;
-let currentCountryGeometry = null;
-let countryAtlasPromise = null;
+let currentRegionGeometry = null;
+let regionAtlasPromise = null;
 let roundTimerId = null;
 let roundDeadline = 0;
 let lastCountdownFlashSecond = null;
@@ -1024,13 +1086,13 @@ function getSavedFreePlaySettings() {
 
 function saveFreePlaySettings() {
   const seconds = Number(document.getElementById('timeLimitInput').value);
-  const countryId = document.getElementById('countrySelect').value;
+  const regionId = document.getElementById('regionSelect').value;
   try {
     localStorage.setItem(FREE_PLAY_SETTINGS_KEY, JSON.stringify({
       timerEnabled: document.getElementById('timerEnabled').checked,
       timeLimitSeconds: Number.isFinite(seconds) ? seconds : 120,
       allowMovement: document.getElementById('movementAllowed').checked,
-      countryId
+      regionId
     }));
   } catch (e) {}
 }
@@ -1083,10 +1145,10 @@ function toggleTips(btn) {
 document.getElementById('settingsBtn').addEventListener('click', () => openKeyModal(true));
 
 /* ---- メインメニュー / モード設定 ---- */
-function populateCountrySelect() {
-  const select = document.getElementById('countrySelect');
-  select.innerHTML = '<option value="world">世界全体</option>' + COVERED_COUNTRIES
-    .map(([id, code, name]) => `<option value="${id}" data-code="${code}">${name}</option>`)
+function populateRegionSelect() {
+  const select = document.getElementById('regionSelect');
+  select.innerHTML = '<option value="world">世界全体</option>' + PLAY_REGIONS
+    .map(({ id, name }) => `<option value="${id}">${name}</option>`)
     .join('');
 }
 
@@ -1105,13 +1167,14 @@ function restoreFreePlaySettings() {
   const timerEnabled = document.getElementById('timerEnabled');
   const timeLimitInput = document.getElementById('timeLimitInput');
   const movementAllowed = document.getElementById('movementAllowed');
-  const countrySelect = document.getElementById('countrySelect');
+  const regionSelect = document.getElementById('regionSelect');
   timerEnabled.checked = saved.timerEnabled === true;
   if (Number.isFinite(saved.timeLimitSeconds)) {
     timeLimitInput.value = String(Math.min(1800, Math.max(30, Math.round(saved.timeLimitSeconds / 30) * 30)));
   }
   if (typeof saved.allowMovement === 'boolean') movementAllowed.checked = saved.allowMovement;
-  if ([...countrySelect.options].some(option => option.value === saved.countryId)) countrySelect.value = saved.countryId;
+  const savedRegionId = saved.regionId ?? saved.countryId;
+  if ([...regionSelect.options].some(option => option.value === savedRegionId)) regionSelect.value = savedRegionId;
   syncTimeLimitControl();
 }
 
@@ -1157,11 +1220,11 @@ function pointInPolygon(pos, polygon) {
   return !polygon.slice(1).some(hole => pointInRing(pos.lng, pos.lat, hole));
 }
 
-function pointInCountry(pos, country) {
-  return country.polygons.some(polygon => pointInPolygon(pos, polygon));
+function pointInRegion(pos, region) {
+  return region.polygons.some(polygon => pointInPolygon(pos, polygon));
 }
 
-function countryMapSizeKm(polygons) {
+function regionMapSizeKm(polygons) {
   const coords = polygons.flatMap(polygon => polygon[0] || []);
   const latBounds = coords.reduce((bounds, point) => ({
     min: Math.min(bounds.min, point[1]), max: Math.max(bounds.max, point[1])
@@ -1187,8 +1250,8 @@ function countryMapSizeKm(polygons) {
   ));
 }
 
-function countryMapBounds(country) {
-  const coords = country.polygons.flatMap(polygon => polygon[0] || []);
+function regionMapBounds(region) {
+  const coords = region.polygons.flatMap(polygon => polygon[0] || []);
   if (!coords.length) return null;
   const latBounds = coords.reduce((bounds, point) => ({
     min: Math.min(bounds.min, point[1]), max: Math.max(bounds.max, point[1])
@@ -1212,20 +1275,29 @@ function countryMapBounds(country) {
   );
 }
 
-async function loadCountryGeometry(countryId) {
-  if (!countryAtlasPromise) {
-    countryAtlasPromise = fetch(COUNTRY_ATLAS_URL).then(res => {
-      if (!res.ok) throw new Error(`国境データの取得に失敗しました (${res.status})`);
-      return res.json();
-    }).then(atlas => {
-      if (!window.topojson) throw new Error('国境データの変換ライブラリを読み込めませんでした');
-      return topojson.feature(atlas, atlas.objects.countries).features;
-    });
+async function loadRegionGeometry(regionId) {
+  const region = PLAY_REGIONS.find(item => item.id === regionId);
+  if (!region) throw new Error('選択した出題地域が見つかりません');
+  let feature;
+  if (region.boundary.type === 'atlas') {
+    if (!regionAtlasPromise) {
+      regionAtlasPromise = fetch(REGION_ATLAS_URL).then(res => {
+        if (!res.ok) throw new Error(`境界データの取得に失敗しました (${res.status})`);
+        return res.json();
+      }).then(atlas => {
+        if (!window.topojson) throw new Error('境界データの変換ライブラリを読み込めませんでした');
+        return topojson.feature(atlas, atlas.objects.countries).features;
+      });
+    }
+    const features = await regionAtlasPromise;
+    feature = features.find(item => String(item.id).padStart(3, '0') === region.boundary.featureId);
+  } else if (region.boundary.type === 'geojson') {
+    feature = { geometry: region.boundary.geometry };
+  } else {
+    throw new Error('出題地域の境界形式に対応していません');
   }
-  const features = await countryAtlasPromise;
-  const feature = features.find(item => String(item.id).padStart(3, '0') === countryId);
   const polygons = geometryPolygons(feature);
-  if (!polygons.length) throw new Error('選択した国の国境データが見つかりません');
+  if (!polygons.length) throw new Error('選択した地域の境界データが見つかりません');
   const components = polygons.map(polygon => {
     const bounds = polygonBounds(polygon);
     const latMid = (bounds.minLat + bounds.maxLat) / 2;
@@ -1233,14 +1305,14 @@ async function loadCountryGeometry(countryId) {
       (bounds.maxLat - bounds.minLat) * (bounds.maxLng - bounds.minLng) * Math.cos(latMid * Math.PI / 180));
     return { polygon, bounds, weight };
   });
-  return { polygons, components, mapSizeKm: countryMapSizeKm(polygons) };
+  return { polygons, components, mapSizeKm: regionMapSizeKm(polygons) };
 }
 
-function randomCountryPoint(country, rng) {
-  const totalWeight = country.components.reduce((sum, item) => sum + item.weight, 0);
+function randomRegionPoint(region, rng) {
+  const totalWeight = region.components.reduce((sum, item) => sum + item.weight, 0);
   for (let tries = 0; tries < 500; tries++) {
     let pick = rng() * totalWeight;
-    const component = country.components.find(item => (pick -= item.weight) <= 0) || country.components.at(-1);
+    const component = region.components.find(item => (pick -= item.weight) <= 0) || region.components.at(-1);
     const { bounds, polygon } = component;
     const pos = {
       lat: bounds.minLat + rng() * (bounds.maxLat - bounds.minLat),
@@ -1248,7 +1320,7 @@ function randomCountryPoint(country, rng) {
     };
     if (pointInPolygon(pos, polygon)) return pos;
   }
-  throw new Error('国境内の候補地点を生成できませんでした');
+  throw new Error('地域内の候補地点を生成できませんでした');
 }
 
 function readFreePlayConfig() {
@@ -1257,15 +1329,14 @@ function readFreePlayConfig() {
   const seconds = Math.min(1800, Math.max(30, Math.round(rawSeconds / 30) * 30));
   document.getElementById('timeLimitInput').value = String(seconds);
   saveFreePlaySettings();
-  const countrySelect = document.getElementById('countrySelect');
-  const selectedOption = countrySelect.selectedOptions[0];
+  const regionSelect = document.getElementById('regionSelect');
+  const selectedOption = regionSelect.selectedOptions[0];
   return {
     mode: 'free', roundLimit: null,
     timeLimitSeconds: timerEnabled ? seconds : 0,
     allowMovement: document.getElementById('movementAllowed').checked,
-    countryId: countrySelect.value,
-    countryCode: selectedOption?.dataset.code || null,
-    countryName: selectedOption?.textContent || '世界全体'
+    regionId: regionSelect.value,
+    regionName: selectedOption?.textContent || '世界全体'
   };
 }
 
@@ -1279,11 +1350,11 @@ async function startSelectedGame() {
   try {
     gameConfig = selectedMenuMode === 'challenge' ? {
       mode: 'challenge', roundLimit: 5, timeLimitSeconds: 180,
-      allowMovement: true, countryId: 'world', countryCode: null, countryName: '世界全体'
+      allowMovement: true, regionId: 'world', regionName: '世界全体'
     } : readFreePlayConfig();
-    currentCountryGeometry = gameConfig.countryId === 'world'
-      ? null : await loadCountryGeometry(gameConfig.countryId);
-    currentMapSizeKm = currentCountryGeometry?.mapSizeKm || WORLD_MAP_SIZE_KM;
+    currentRegionGeometry = gameConfig.regionId === 'world'
+      ? null : await loadRegionGeometry(gameConfig.regionId);
+    currentMapSizeKm = currentRegionGeometry?.mapSizeKm || WORLD_MAP_SIZE_KM;
     roundHistory = [];
     roundNumber = 1;
     gameActive = true;
@@ -1322,7 +1393,7 @@ function openMainMenu() {
   startBtn.textContent = mapsLoaded ? 'この設定で開始' : '地図を準備中…';
 }
 
-populateCountrySelect();
+populateRegionSelect();
 restoreFreePlaySettings();
 document.querySelectorAll('[data-game-mode]').forEach(btn => {
   btn.addEventListener('click', () => selectMenuMode(btn.dataset.gameMode));
@@ -1333,7 +1404,7 @@ document.getElementById('timerEnabled').addEventListener('change', () => {
 });
 document.getElementById('timeLimitInput').addEventListener('change', saveFreePlaySettings);
 document.getElementById('movementAllowed').addEventListener('change', saveFreePlaySettings);
-document.getElementById('countrySelect').addEventListener('change', saveFreePlaySettings);
+document.getElementById('regionSelect').addEventListener('change', saveFreePlaySettings);
 document.getElementById('startGameBtn').addEventListener('click', startSelectedGame);
 document.getElementById('menuBtn').addEventListener('click', openMainMenu);
 document.getElementById('summaryMenuBtn').addEventListener('click', openMainMenu);
@@ -1361,8 +1432,8 @@ function haversine(a, b) {
 }
 
 function randomLatLng(rng = Math.random) {
-  return currentCountryGeometry
-    ? randomCountryPoint(currentCountryGeometry, rng)
+  return currentRegionGeometry
+    ? randomRegionPoint(currentRegionGeometry, rng)
     : { lat: rng() * 130 - 60, lng: rng() * 360 - 180 };
 }
 
@@ -1375,13 +1446,13 @@ function beginRoundSearch() {
 // 探索回数・検索半径・返却地点の再検証を変更するときは docs/area-selection.md も更新する。
 function findRandomPano(attempt = 0) {
   if (!gameActive) return;
-  const MAX = currentCountryGeometry ? 240 : 120;
+  const MAX = currentRegionGeometry ? 240 : 120;
   if (attempt >= MAX) {
-    const area = gameConfig?.countryName || '指定エリア';
+    const area = gameConfig?.regionName || '指定エリア';
     showStatus(`${area}でストリートビューが見つかりませんでした。メニューから別の設定をお試しください。`, false);
     return;
   }
-  if (attempt % 10 === 0) showStatus(`${gameConfig?.countryName || '世界'}の地点を探索中… (${attempt})`);
+  if (attempt % 10 === 0) showStatus(`${gameConfig?.regionName || '世界'}の地点を探索中… (${attempt})`);
   let loc;
   try { loc = randomLatLng(roundRandom); }
   catch (error) {
@@ -1398,7 +1469,7 @@ function findRandomPano(attempt = 0) {
     if (!gameActive) return;
     if (status === google.maps.StreetViewStatus.OK) {
       const found = { lat: data.location.latLng.lat(), lng: data.location.latLng.lng() };
-      if (!currentCountryGeometry || pointInCountry(found, currentCountryGeometry)) {
+      if (!currentRegionGeometry || pointInRegion(found, currentRegionGeometry)) {
         startRound(data);
         return;
       }
@@ -1438,8 +1509,8 @@ function startRound(data) {
 function resetRoundMapViewport() {
   if (!map) return;
   google.maps.event.trigger(map, 'resize');
-  if (currentCountryGeometry) {
-    const bounds = countryMapBounds(currentCountryGeometry);
+  if (currentRegionGeometry) {
+    const bounds = regionMapBounds(currentRegionGeometry);
     if (bounds) {
       map.fitBounds(bounds, 20);
       return;
