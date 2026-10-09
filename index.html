@@ -1193,9 +1193,24 @@ function selectMenuMode(mode) {
 // 出題エリアの境界・候補点生成を変更するときは docs/area-selection.md も更新する。
 function geometryPolygons(feature) {
   if (!feature?.geometry) return [];
-  return feature.geometry.type === 'Polygon'
+  const polygons = feature.geometry.type === 'Polygon'
     ? [feature.geometry.coordinates]
     : feature.geometry.type === 'MultiPolygon' ? feature.geometry.coordinates : [];
+  return polygons.map(polygon => polygon.map(unwrapRing));
+}
+
+// ±180°を結ぶ辺を世界横断として扱うと、ロシアにグリーンランドなどが含まれてしまう。
+function unwrapRing(ring) {
+  let previousLng = ring[0]?.[0] || 0;
+  return ring.map(([lng, lat]) => {
+    const unwrappedLng = lng + 360 * Math.round((previousLng - lng) / 360);
+    previousLng = unwrappedLng;
+    return [unwrappedLng, lat];
+  });
+}
+
+function normalizeLongitude(lng) {
+  return ((lng + 180) % 360 + 360) % 360 - 180;
 }
 
 function polygonBounds(polygon) {
@@ -1203,10 +1218,13 @@ function polygonBounds(polygon) {
   return points.reduce((b, [lng, lat]) => ({
     minLat: Math.min(b.minLat, lat), maxLat: Math.max(b.maxLat, lat),
     minLng: Math.min(b.minLng, lng), maxLng: Math.max(b.maxLng, lng)
-  }), { minLat: 90, maxLat: -90, minLng: 180, maxLng: -180 });
+  }), { minLat: 90, maxLat: -90, minLng: Infinity, maxLng: -Infinity });
 }
 
 function pointInRing(lng, lat, ring) {
+  const bounds = polygonBounds([ring]);
+  const middleLng = (bounds.minLng + bounds.maxLng) / 2;
+  lng += 360 * Math.round((middleLng - lng) / 360);
   let inside = false;
   for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
     const [xi, yi] = ring[i], [xj, yj] = ring[j];
@@ -1316,7 +1334,7 @@ function randomRegionPoint(region, rng) {
     const { bounds, polygon } = component;
     const pos = {
       lat: bounds.minLat + rng() * (bounds.maxLat - bounds.minLat),
-      lng: bounds.minLng + rng() * (bounds.maxLng - bounds.minLng)
+      lng: normalizeLongitude(bounds.minLng + rng() * (bounds.maxLng - bounds.minLng))
     };
     if (pointInPolygon(pos, polygon)) return pos;
   }

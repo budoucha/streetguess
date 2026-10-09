@@ -158,3 +158,25 @@ test('world mode retains its range and needs no boundaries; challenge resets sel
   assert.equal(a.run('currentMapSizeKm'), a.run('WORLD_MAP_SIZE_KM'));
   assert.equal(a.fetchCount(), 0);
 });
+
+test('date-line boundaries contain both sides of the meridian but not Greenland', () => {
+  const a = app();
+  a.context.feature = { geometry: { type: 'Polygon', coordinates: [
+    [[170, 60], [-170, 60], [-170, 75], [170, 75], [170, 60]],
+    [[175, 65], [-175, 65], [-175, 70], [175, 70], [175, 65]]
+  ] } };
+  a.run(`polygons = geometryPolygons(feature); bounds = polygonBounds(polygons[0]);
+    shape = { polygons, components: [{ polygon: polygons[0], bounds, weight: 1 }] };`);
+  assert.equal(a.run('pointInRegion({ lat: 62, lng: 179 }, shape)'), true);
+  assert.equal(a.run('pointInRegion({ lat: 62, lng: -179 }, shape)'), true);
+  assert.equal(a.run('pointInRegion({ lat: 67, lng: 179 }, shape)'), false);
+  assert.equal(a.run('pointInRegion({ lat: 67.1799256, lng: -63.9963187 }, shape)'), false);
+  assert.equal(a.run('bounds.maxLng - bounds.minLng'), 20);
+  a.context.rng = seeded();
+  for (let i = 0; i < 1000; i++) {
+    a.context.point = a.run('randomRegionPoint(shape, rng)');
+    assert.ok(a.context.point.lng >= -180 && a.context.point.lng < 180);
+    assert.ok(Math.abs(a.context.point.lng) >= 170);
+    assert.equal(a.run('pointInRegion(point, shape)'), true);
+  }
+});
